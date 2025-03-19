@@ -508,3 +508,20 @@ print("Patch Embedding Shape:", patch_embeddings.shape)
 # 预期：应该是 (2, num_patches, hidden_size)
 # num_patches = (32//4) * (32//4) * (32//4) = 512
 # 预期输出：(2, 512, 128)
+
+vit_mae_embeddings = ViTMAEEmbeddings(config)
+
+# 生成一个 batch_size=2 的随机 3D 图像
+pixel_values = torch.randn(2, config.num_channels, *config.image_size)  # (2, 1, 32, 32, 32)
+
+# 获取嵌入结果
+embeddings, mask, ids_restore = vit_mae_embeddings(pixel_values)
+
+print("Embeddings Shape:", embeddings.shape)
+print("Mask Shape:", mask.shape)
+print("IDs Restore Shape:", ids_restore.shape)
+# 预期：
+# embeddings.shape == (batch_size, len_keep+1, hidden_size) (cls token + 变换后patch数)
+# mask.shape == (batch_size, num_patches)
+# ids_restore.shape == (batch_size, num_patches)
+
