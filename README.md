@@ -489,3 +489,22 @@ class ViTMAEEmbeddings(nn.Module):
         x = x.flatten(2).transpose(1, 2) #B numpatches hiddensize
         return x
 
+import torch
+
+class Config:
+    image_size = (32, 32, 32)  # 3D 图像尺寸
+    patch_size = (4, 4, 4)  # Patch 大小
+    num_channels = 1  # 单通道输入（例如 CT 扫描）
+    hidden_size = 128  # Patch 维度
+
+config = Config()
+patch_embedding_layer = ViTMAEPatchEmbeddings3D(config)
+
+# 生成一个 batch_size=2 的随机 3D 图像
+pixel_values = torch.randn(2, config.num_channels, *config.image_size)  # (2, 1, 32, 32, 32)
+
+patch_embeddings = patch_embedding_layer(pixel_values)
+print("Patch Embedding Shape:", patch_embeddings.shape)
+# 预期：应该是 (2, num_patches, hidden_size)
+# num_patches = (32//4) * (32//4) * (32//4) = 512
+# 预期输出：(2, 512, 128)
