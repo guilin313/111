@@ -658,3 +658,5 @@ print("Hidden States Shape:", hidden_states.shape)
 print("Ids Restore Shape:", ids_restore.shape)
 # 打印输出信息
 print("Decoder Output Shape:", output.logits.shape)  # 期望形状: (batch_size, num_patches, patch_size^3 * num_channels)
+![Screenshot from 2025-03-20 14-51-46](https://github.com/user-attachments/assets/840a24ea-930f-4798-ba06-5f9702b88581)
+
