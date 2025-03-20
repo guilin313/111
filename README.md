@@ -578,3 +578,43 @@ print("IDs Restore Shape:", ids_restore.shape)
 # mask.shape == (batch_size, num_patches)
 # ids_restore.shape == (batch_size, num_patches)
 
+
+
+
+# 假设的测试参数
+batch_size = 2
+num_patches = 64  # 假设 4x4x4 形状的 Patch grid
+hidden_size = 512
+decoder_hidden_size = 256
+
+# 创建假 config
+config = SimpleNamespace(
+    hidden_size=hidden_size,
+    decoder_hidden_size=decoder_hidden_size,
+    decoder_num_hidden_layers=4,
+    decoder_num_attention_heads=8,
+    decoder_intermediate_size=1024,
+    patch_size=(16, 16, 16),  # 3D Patch 尺寸
+    num_channels=1,
+    layer_norm_eps=1e-6,
+    initializer_range=0.02,
+)
+
+# 创建输入张量 (batch_size, num_visible_patches + 1, hidden_size)
+hidden_states = torch.randn(batch_size, num_patches // 2 + 1, hidden_size)
+
+# 生成恢复索引 (batch_size, num_patches)
+ids_restore = torch.arange(num_patches).repeat(batch_size, 1)
+
+# 创建 ViTMAEDecoder3D 实例
+decoder = ViTMAEDecoder3D(config, num_patches)
+
+# 确保模型在评估模式下
+decoder.eval()
+
+with torch.no_grad():
+    output = decoder(hidden_states, ids_restore)
+print("Hidden States Shape:", hidden_states.shape)
+print("Ids Restore Shape:", ids_restore.shape)
+# 打印输出信息
+print("Decoder Output Shape:", output.logits.shape)  # 期望形状: (batch_size, num_patches, patch_size^3 * num_channels)
