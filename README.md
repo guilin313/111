@@ -519,6 +519,59 @@ embeddings, mask, ids_restore = vit_mae_embeddings(pixel_values)
 
 print("Embeddings Shape:", embeddings.shape)
 print("Mask Shape:", mask.shape)
+
+import torch
+from copy import deepcopy
+
+# 假设 ViTMAEPatchEmbeddings3D, ViTMAEEmbeddings3D, ViTMAEDecoder3D 已经定义
+# 以及 ViTMAEConfig3D 也已经存在
+
+# 创建 3D 配置
+config = ViTMAEConfig3D(
+    image_size=(64, 64, 64),  # 3D 图像尺寸
+    patch_size=(16, 16, 16),  # 3D Patch 大小
+    num_channels=1,  # 例如医学图像（MRI/CT）通常是单通道
+    hidden_size=768,
+    num_hidden_layers=12,
+    num_attention_heads=12,
+    intermediate_size=3072,
+    decoder_hidden_size=512,
+    decoder_num_hidden_layers=8,
+    decoder_num_attention_heads=8,
+    decoder_intermediate_size=2048
+)
+
+# 计算 num_patches
+grid_size = (
+    config.image_size[0] // config.patch_size[0],  
+    config.image_size[1] // config.patch_size[1],  
+    config.image_size[2] // config.patch_size[2]  
+)
+num_patches = grid_size[0] * grid_size[1] * grid_size[2]  # 总 patch 数
+
+# **创建 ViTMAEEmbeddings3D**
+embed_layer = ViTMAEEmbeddings3D(config)
+
+# **创建 ViTMAEDecoder3D**
+decoder = ViTMAEDecoder(config, num_patches)
+
+# **生成假数据**
+batch_size = 2  # 设定 batch size
+hidden_states = torch.randn(batch_size, num_patches // 2, config.hidden_size)  # 一半 token 被 mask
+ids_restore = torch.randint(0, num_patches, (batch_size, num_patches))  # 伪随机还原索引
+
+# **运行 decoder**
+output = decoder(
+    hidden_states=hidden_states,
+    ids_restore=ids_restore,
+    return_dict=True
+)
+
+# **测试输出**
+print("Decoder 输出 logits 形状:", output.logits.shape)  
+# 期望输出: (batch_size, num_patches, patch_size**3 * num_channels)
+# (2, num_patches, 16*16*16*1)
+
 print("IDs Restore Shape:", ids_restore.shape)
 # 预期：
 # embeddings.shape == (batch_size, len_keep+1, hidden_size) (cls token + 变换后patch数)
