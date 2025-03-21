@@ -170,3 +170,13 @@ precision:0.756
 recall:0.290
 F1 score:0.418919
 tp:31,fp:10,fn:76
+
+
+
+def get_3d_sincos_pos_embed(embed_dim, grid_size, add_cls_token=False):
+def get_3d_sincos_pos_embed_from_grid(embed_dim, grid):
+def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
+class ViTMAEEmbeddings3D(nn.Module):
+class ViTMAEPatchEmbeddings3D(nn.Module):
+
+class ViTMAEDecoder(nn.Module):
