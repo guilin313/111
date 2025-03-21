@@ -1,3 +1,5 @@
+![Screenshot from 2025-03-21 11-04-10](https://github.com/user-attachments/assets/9ca2d639-7ed8-4c9a-840b-897def511b5a)
+
 import torch,gc
 import torch.optim as optim
 import torch.nn as nn
