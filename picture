@@ -180,3 +180,79 @@ class ViTMAEEmbeddings3D(nn.Module):
 class ViTMAEPatchEmbeddings3D(nn.Module):
 
 class ViTMAEDecoder(nn.Module):
+
+class Config:
+    image_size = (32, 320, 320)  # 3D 图像尺寸
+    patch_size = (16, 16, 16)  # Patch 大小
+    num_channels = 1  # 单通道输入（例如 CT 扫描）
+    hidden_size = 1536  # Patch 维度
+    initializer_range = 0.02 #控制权重初始化的标准
+    mask_ratio = 0.75#设置遮掩比例，保留75%的区域
+
+config = Config()
+patch_embedding_layer = ViTMAEPatchEmbeddings3D(config)
+
+# 生成一个 batch_size=2 的随机 3D 图像
+pixel_values = torch.randn(2, config.num_channels, *config.image_size)  # (2, 1, 32, 320, 320)
+
+patch_embeddings = patch_embedding_layer(pixel_values)
+print("Patch Embedding Shape:", patch_embeddings.shape)
+# 预期：应该是 (2, num_patches, hidden_size)
+# num_patches = (32//16) * (320//16) * (320//16) = 800
+# 预期输出：(2, 800, 1536)
+vit_mae_embeddings = ViTMAEEmbeddings(config)
+
+# 生成一个 batch_size=2 的随机 3D 图像
+pixel_values = torch.randn(2, config.num_channels, *config.image_size)  # (2, 1, 32, 320, 320)
+
+# 获取嵌入结果
+embeddings, mask, ids_restore = vit_mae_embeddings(pixel_values)
+
+print("Embeddings Shape:", embeddings.shape)
+print("Mask Shape:", mask.shape)
+print("IDs Restore Shape:", ids_restore.shape)
+
+
+
+
+
+# 测试decoder代码   假设的测试参数
+batch_size = 2
+hidden_size = 768
+decoder_hidden_size = 768
+
+# 创建假 config
+config = ViTMAEConfig(
+    image_size=(32, 320, 320),
+    hidden_size=hidden_size,
+    decoder_hidden_size=decoder_hidden_size,
+    decoder_num_hidden_layers=4,
+    decoder_num_attention_heads=8,
+    decoder_intermediate_size=1024,
+    patch_size=(16, 16, 16),  # 3D Patch 尺寸
+    num_channels=1,
+    layer_norm_eps=1e-6,
+    initializer_range=0.02,
+     mask_ratio = 0.75,
+)
+
+num_patches = (config.image_size[0] // config.patch_size[0]) * (config.image_size[1] // config.patch_size[1]) * (config.image_size[2] // config.patch_size[2])
+
+# 创建输入张量 (batch_size, num_visible_patches + 1, hidden_size)
+hidden_states = torch.randn(batch_size, num_patches // 2 + 1, hidden_size)
+
+# 生成恢复索引 (batch_size, num_patches)
+ids_restore = torch.arange(num_patches).repeat(batch_size, 1)
+
+# 创建 ViTMAEDecoder3D 实例
+decoder = ViTMAEDecoder(config, num_patches)
+
+# 确保模型在评估模式下
+decoder.eval()
+
+with torch.no_grad():
+    output = decoder(hidden_states, ids_restore)
+print("Hidden States Shape:", hidden_states.shape)
+print("Ids Restore Shape:", ids_restore.shape)
+# 打印输出信息
+print("Decoder Output Shape:", output.logits.shape)  # 期望形状: (batch_size, num_patches, patch_size^3 * num_channels)
