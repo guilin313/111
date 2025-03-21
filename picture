@@ -166,3 +166,7 @@ match_pre_coords[:, 1].shape: (7,)
 match_post_coords.shape: (34, 3)
 match_post_coords[:, 2].shape: (34,)
 match_post_coords[:, 1].shape: (34,)
+precision:0.756
+recall:0.290
+F1 score:0.418919
+tp:31,fp:10,fn:76
