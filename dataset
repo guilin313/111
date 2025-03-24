@@ -1,0 +1,66 @@
+import os
+import torch
+import random
+import numpy as np
+import tifffile as tiff
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from torch.utils.data import Dataset, DataLoader
+
+class TIFDataset(Dataset):
+    def __init__(self, data_dir, augment=True):
+        self.data_dir = data_dir
+        self.file_list = sorted(os.listdir(data_dir))
+        self.augment = augment
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        file_path = os.path.join(self.data_dir, self.file_list[idx])
+        image = tiff.imread(file_path)  # (D, H, W)
+        
+        # 归一化到 [0,1]
+        image = image.astype('float32') / 255.0  
+
+        # 3D 预处理
+        image = self.preprocess(image)
+
+        # 转换为 Tensor
+        image = torch.tensor(image).unsqueeze(0)  # [C=1, D, H, W]
+        return image
+
+    def preprocess(self, image):
+        """ 数据预处理：标准化 & 数据增强 """
+        # 标准化（减均值，除以标准差）
+        image = (image - np.mean(image)) / (np.std(image) + 1e-5)
+
+        if self.augment:
+            image = self.augment_data(image)
+        
+        return image
+
+    def augment_data(self, image):
+        """ 数据增强：随机翻转、旋转、高斯噪声 """
+        if random.random() > 0.5:
+            image = np.flip(image, axis=1)  # 左右翻转
+        if random.random() > 0.5:
+            image = np.flip(image, axis=2)  # 上下翻转
+        if random.random() > 0.5:
+            image = np.flip(image, axis=0)  # 深度翻转
+
+        # 旋转 90/180/270 度
+        if random.random() > 0.5:
+            k = random.choice([1, 2, 3])
+            image = np.rot90(image, k=k, axes=(1, 2))  
+
+        # 添加高斯噪声
+        if random.random() > 0.7:
+            noise = np.random.normal(0, 0.01, image.shape)
+            image = np.clip(image + noise, 0, 1)
+
+        return image
+
+def get_dataloader(data_dir, batch_size=4, augment=True):
+    dataset = TIFDataset(data_dir, augment=augment)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
