@@ -1,3 +1,27 @@
+  inflating: 4096_2048_2300_2400.h5  
+  inflating: 2048_4096_600_700.h5    
+
+Archive:  Kasthuri2015_hdf_5.zip
+  inflating: 8192_5120_100_200.h5    
+  inflating: 9216_7168_800_900.h5    
+  inflating: 8192_5120_1700_1800.h5  
+  inflating: 7168_4096_800_900.h5    
+replace 3072_4096_1200_1300.h5? [y]es, [n]o, [A]ll, [N]one, [r]ename: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import h5py
 import numpy as np
