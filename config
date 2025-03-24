@@ -1,0 +1,19 @@
+class Args:
+    input_size = (32, 320, 320)
+    patch_size = (4, 16, 16)
+    in_chans = 1
+    mask_ratio = 0.75
+    encoder_embed_dim = 768
+    encoder_depth = 12
+    encoder_num_heads = 12
+    decoder_embed_dim = 512
+    decoder_depth = 8
+    decoder_num_heads = 8
+    pos_embed_type = 'sincos'
+    patchembed = "PatchEmbed3D"
+    batch_size = 4
+    lr = 1e-4
+    weight_decay = 1e-4
+    num_epochs = 100
+
+args = Args()
