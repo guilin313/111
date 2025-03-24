@@ -1,0 +1,73 @@
+import torch
+import torch.optim as optim
+from torch.nn.parallel import DataParallel
+from dataset import get_dataloader
+from model import MAE3D
+from config import args
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+import numpy as np
+
+# 自定义 ViT 编码器 & 解码器
+encoder = ...  # 你的 ViT 3D 编码器
+decoder = ...  # 你的 ViT 3D 解码器
+
+# 初始化模型
+model = MAE3D(encoder, decoder, args)
+model = DataParallel(model).cuda()
+
+# 训练参数
+optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.num_epochs)
+dataloader = get_dataloader("/path/to/your/tif_data", batch_size=args.batch_size)
+
+# AMP 训练
+scaler = torch.cuda.amp.GradScaler()
+accumulation_steps = 4  # 梯度累积步数
+
+# TensorBoard 记录
+writer = SummaryWriter(log_dir="runs/mae3d")
+
+# 训练循环
+for epoch in range(args.num_epochs):
+    model.train()
+    epoch_loss = 0.0
+    progress_bar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Epoch {epoch+1}/{args.num_epochs}")
+    correct, total = 0, 0
+    
+    for i, (batch) in progress_bar:
+        batch = batch.cuda()
+        optimizer.zero_grad()
+
+        with torch.cuda.amp.autocast():  # 混合精度计算
+            loss, original, recon, masked = model(batch, return_image=True)
+            loss = loss / accumulation_steps  # 进行梯度累积
+        
+        scaler.scale(loss).backward()  # 反向传播
+        
+        if (i + 1) % accumulation_steps == 0:
+            scaler.step(optimizer)  # 更新参数
+            scaler.update()  # 更新 Scaler
+            optimizer.zero_grad()
+        
+        epoch_loss += loss.item() * accumulation_steps  # 还原 Loss 计算
+        progress_bar.set_postfix(loss=loss.item() * accumulation_steps)
+        
+        # 计算精度
+        recon_error = torch.abs(original - recon).mean(dim=(1, 2, 3))  # 计算每个样本的重建误差
+        batch_accuracy = torch.exp(-recon_error).mean().item()  # 转换为精度
+        correct += batch_accuracy * batch.size(0)
+        total += batch.size(0)
+    
+    scheduler.step()  # 学习率衰减
+    avg_loss = epoch_loss / len(dataloader)
+    accuracy = correct / total  # 计算平均精度
+    print(f"Epoch [{epoch+1}/{args.num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.4f}")
+    writer.add_scalar("Loss/train", avg_loss, epoch)
+    writer.add_scalar("Accuracy/train", accuracy, epoch)
+
+# 关闭 TensorBoard 记录
+writer.close()
+
+# 保存模型
+torch.save(model.state_dict(), "mae3d_model.pth")
