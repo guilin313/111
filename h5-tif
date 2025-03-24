@@ -1,0 +1,47 @@
+import os
+import h5py
+import numpy as np
+from tifffile import imsave
+
+def crop_and_save_h5_to_tiff(input_folder, output_folder, crop_depth=32, crop_height=320, crop_width=320):
+    """
+    将输入文件夹中的 HDF5 文件裁剪为指定尺寸的 TIFF 图像，并保存到输出文件夹。
+
+    参数：
+    - input_folder: 包含 HDF5 文件的输入文件夹路径。
+    - output_folder: 保存裁剪后 TIFF 图像的输出文件夹路径。
+    - crop_depth: 裁剪块的深度尺寸，默认为 32。
+    - crop_height: 裁剪块的高度尺寸，默认为 320。
+    - crop_width: 裁剪块的宽度尺寸，默认为 320。
+    """
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for filename in os.listdir(input_folder):
+        if filename.endswith('.h5'):
+            input_path = os.path.join(input_folder, filename)
+            with h5py.File(input_path, 'r') as h5_file:
+                # 假设数据存储在名为 'data' 的数据集中
+                data = h5_file['data'][:]
+                depth, height, width = data.shape
+
+                # 计算可以完全裁剪的区域
+                max_depth = (depth // crop_depth) * crop_depth
+                max_height = (height // crop_height) * crop_height
+                max_width = (width // crop_width) * crop_width
+
+                crop_num = 0
+                for d in range(0, max_depth, crop_depth):
+                    for h in range(0, max_height, crop_height):
+                        for w in range(0, max_width, crop_width):
+                            crop = data[d:d + crop_depth, h:h + crop_height, w:w + crop_width]
+                            crop_num += 1
+                            output_filename = f"{os.path.splitext(filename)[0]}_crop_{crop_num}.tif"
+                            output_path = os.path.join(output_folder, output_filename)
+                            imsave(output_path, crop.astype(np.float32))
+                            print(f"保存裁剪图像: {output_path}")
+
+if __name__ == "__main__":
+    input_folder = 'path/to/input_folder'  # 替换为实际的输入文件夹路径
+    output_folder = 'path/to/output_folder'  # 替换为实际的输出文件夹路径
+    crop_and_save_h5_to_tiff(input_folder, output_folder)
