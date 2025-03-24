@@ -17,3 +17,44 @@ class Args:
     num_epochs = 100
 
 args = Args()
+
+
+class ViT3DEncoder(nn.Module):
+    def __init__(self, patch_size, in_chans, embed_dim, depth, num_heads, embed_layer=PatchEmbed3D):
+        super().__init__()
+        self.patch_embed = embed_layer(img_size=(32, 320, 320),  # 根据你的数据调整
+                                       patch_size=patch_size,
+                                       in_chans=in_chans,
+                                       embed_dim=embed_dim)
+        self.num_patches = self.patch_embed.num_patches
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
+        self.blocks = nn.ModuleList([
+            Block(embed_dim, num_heads) for _ in range(depth)
+        ])
+        self.norm = nn.LayerNorm(embed_dim)
+
+    def forward(self, x, pos_embed):
+        x = self.patch_embed(x)  # [B, N, C]
+        x += pos_embed
+        for blk in self.blocks:
+            x = blk(x)
+        x = self.norm(x)
+        return x
+
+class ViT3DDecoder(nn.Module):
+    def __init__(self, patch_size, num_classes, embed_dim, depth, num_heads):
+        super().__init__()
+        self.num_patches = (32 // patch_size[0]) * (320 // patch_size[1]) * (320 // patch_size[2])
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
+        self.blocks = nn.ModuleList([
+            Block(embed_dim, num_heads) for _ in range(depth)
+        ])
+        self.norm = nn.LayerNorm(embed_dim)
+        self.head = nn.Linear(embed_dim, num_classes)
+
+    def forward(self, x):
+        for blk in self.blocks:
+            x = blk(x)
+        x = self.norm(x)
+        x = self.head(x)
+        return x
