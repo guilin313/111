@@ -1,3 +1,23 @@
+from transformers import ViTMAEConfig
+from vitmae3d import ViTMAEForPreTraining
+
+config = ViTMAEConfig(
+    image_size=(32, 320, 320),
+    patch_size=(4, 40, 40),
+    num_channels=1,
+    hidden_size=768,
+    num_attention_heads=12,
+    num_hidden_layers=12,
+    decoder_hidden_size=512,
+    decoder_num_hidden_layers=4,
+    decoder_num_attention_heads=8,
+    decoder_intermediate_size=2048,
+    mask_ratio=0.75,
+    norm_pix_loss=True
+)
+model = ViTMAEForPreTraining(config)
+
+
 class Args:
     input_size = (32, 320, 320)
     patch_size = (4, 16, 16)
