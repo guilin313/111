@@ -1,3 +1,5 @@
+https://blog.csdn.net/weixin_45508265/article/details/130287752
+
 from transformers import ViTMAEConfig
 from vitmae3d import ViTMAEForPreTraining
 
