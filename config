@@ -1,3 +1,6 @@
+pip install --no-cache-dir git+https://github.com/huggingface/transformers
+
+
 (pt12) guilin@guilin-System-Product-Name:~$ pip uninstall transformers -y
 Found existing installation: transformers 4.50.0
 Uninstalling transformers-4.50.0:
