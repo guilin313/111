@@ -1,16 +1,15 @@
-(pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/mae2dpretrain$ /bin/bash /home/guilin/PycharmProjects/mae2dpretrain/script.sh
-Traceback (most recent call last):
-  File "/home/guilin/PycharmProjects/mae2dpretrain/run_mae.py", line 46, in <module>
-    check_min_version("4.51.0.dev0")
-  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/utils/__init__.py", line 295, in check_min_version
-    raise ImportError(
-ImportError: This example requires a source install from HuggingFace Transformers (see `https://huggingface.co/docs/transformers/installation#install-from-source`), but the version found is 4.50.0.
-Check out https://github.com/huggingface/transformers/tree/main/examples#important-note for the examples corresponding to other versions of HuggingFace Transformers.
-(pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/mae2dpretrain$ pip install git+https://github.com/huggingface/transformers
+(pt12) guilin@guilin-System-Product-Name:~$ pip uninstall transformers -y
+Found existing installation: transformers 4.50.0
+Uninstalling transformers-4.50.0:
+  Successfully uninstalled transformers-4.50.0
+(pt12) guilin@guilin-System-Product-Name:~$ pip install git+https://github.com/huggingface/transformers
 DEPRECATION: Loading egg at /home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/huggingface_hub-0.29.2-py3.8.egg is deprecated. pip 25.1 will enforce this behaviour change. A possible replacement is to use pip for package installation. Discussion can be found at https://github.com/pypa/pip/issues/12330
 Collecting git+https://github.com/huggingface/transformers
-  Cloning https://github.com/huggingface/transformers to /tmp/pip-req-build-7p29hjy6
-  Running command git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-7p29hjy6
+  Cloning https://github.com/huggingface/transformers to /tmp/pip-req-build-6715u09u
+  Running command git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-6715u09u
+
+
+
 
 
 https://blog.csdn.net/weixin_45508265/article/details/130287752
