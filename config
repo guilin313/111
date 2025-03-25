@@ -9,6 +9,35 @@ Collecting git+https://github.com/huggingface/transformers
   Running command git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-6715u09u
 
 
+(pt12) guilin@guilin-System-Product-Name:~$ pip install git+https://github.com/huggingface/transformers
+DEPRECATION: Loading egg at /home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/huggingface_hub-0.29.2-py3.8.egg is deprecated. pip 25.1 will enforce this behaviour change. A possible replacement is to use pip for package installation. Discussion can be found at https://github.com/pypa/pip/issues/12330
+Collecting git+https://github.com/huggingface/transformers
+  Cloning https://github.com/huggingface/transformers to /tmp/pip-req-build-6715u09u
+  Running command git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-6715u09u
+  error: RPC failed; curl 92 HTTP/2 stream 0 was not closed cleanly: CANCEL (err 8)
+  error: 4069 bytes of body are still expected
+  fetch-pack: unexpected disconnect while reading sideband packet
+  fatal: early EOF
+  fatal: fetch-pack: invalid index-pack output
+  error: subprocess-exited-with-error
+  
+  × git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-6715u09u did not run successfully.
+  │ exit code: 128
+  ╰─> See above for output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+
+[notice] A new release of pip is available: 24.3.1 -> 25.0.1
+[notice] To update, run: pip install --upgrade pip
+error: subprocess-exited-with-error
+
+× git clone --filter=blob:none --quiet https://github.com/huggingface/transformers /tmp/pip-req-build-6715u09u did not run successfully.
+│ exit code: 128
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.
+
+
 
 
 
