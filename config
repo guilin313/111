@@ -1,3 +1,12 @@
+***** eval metrics *****
+  epoch                   =      100.0
+  eval_loss               =     0.1382
+  eval_runtime            = 0:00:24.54
+  eval_samples_per_second =    305.553
+  eval_steps_per_second   =     38.214
+
+
+
 pip install --no-cache-dir git+https://github.com/huggingface/transformers
 
 
