@@ -1,4 +1,28 @@
- FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
+(pt12) guilin@guilin-System-Product-Name:~/data_proccess$ python unzip.py ./EM_pretrain_data
+Extracting FAFB_crop_hdf_4.zip to ./EM_pretrain_data/FAFB_crop_hdf_4...
+Extracting Kasthuri2015_hdf_5.zip to ./EM_pretrain_data/Kasthuri2015_hdf_5...
+Extracting Kasthuri2015_hdf_9.zip to ./EM_pretrain_data/Kasthuri2015_hdf_9...
+Extracting Kasthuri2015_hdf_8.zip to ./EM_pretrain_data/Kasthuri2015_hdf_8...
+Extracting Kasthuri2015_hdf_2.zip to ./EM_pretrain_data/Kasthuri2015_hdf_2...
+Extracting FIB-25_hdf_6.zip to ./EM_pretrain_data/FIB-25_hdf_6...
+Extracting Kasthuri2015_hdf_3.zip to ./EM_pretrain_data/Kasthuri2015_hdf_3...
+Traceback (most recent call last):
+  File "/home/guilin/data_proccess/unzip.py", line 52, in <module>
+    extract_all_in_dir(args.dir)
+  File "/home/guilin/data_proccess/unzip.py", line 44, in extract_all_in_dir
+    extract_archive(fpath, out_dir)
+  File "/home/guilin/data_proccess/unzip.py", line 9, in extract_archive
+    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/zipfile/__init__.py", line 1349, in __init__
+    self._RealGetContents()
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/zipfile/__init__.py", line 1416, in _RealGetContents
+    raise BadZipFile("File is not a zip file")
+zipfile.BadZipFile: File is not a zip file
+
+
+
+FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
   warnings.warn(
 INFO:__main__:Loading data...
 yes
