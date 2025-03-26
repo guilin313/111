@@ -118,19 +118,22 @@ import gzip
 import shutil
 
 def extract_archive(archive_path, output_dir):
-    if archive_path.endswith(".zip"):
-        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-            zip_ref.extractall(output_dir)
-    elif archive_path.endswith((".tar.gz", ".tgz", ".tar")):
-        with tarfile.open(archive_path, 'r:*') as tar_ref:
-            tar_ref.extractall(output_dir)
-    elif archive_path.endswith(".gz") and not archive_path.endswith(".tar.gz"):
-        with gzip.open(archive_path, 'rb') as f_in:
-            out_path = os.path.join(output_dir, os.path.basename(archive_path)[:-3])
-            with open(out_path, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-    else:
-        print(f"Unsupported format: {archive_path}")
+    try:
+        if archive_path.endswith(".zip"):
+            with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                zip_ref.extractall(output_dir)
+        elif archive_path.endswith((".tar.gz", ".tgz", ".tar")):
+            with tarfile.open(archive_path, 'r:*') as tar_ref:
+                tar_ref.extractall(output_dir)
+        elif archive_path.endswith(".gz") and not archive_path.endswith(".tar.gz"):
+            with gzip.open(archive_path, 'rb') as f_in:
+                out_path = os.path.join(output_dir, os.path.basename(archive_path)[:-3])
+                with open(out_path, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        else:
+            print(f"Unsupported format: {archive_path}")
+    except Exception as e:
+        print(f"❌ Failed to extract {archive_path}: {e}")
 
 def extract_all_in_dir(target_dir):
     for fname in os.listdir(target_dir):
