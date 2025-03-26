@@ -1,3 +1,18 @@
+ FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
+  warnings.warn(
+INFO:__main__:Loading data...
+yes
+INFO:__main__:Start training...
+{'loss': 0.9422, 'grad_norm': 0.2779630422592163, 'learning_rate': 3.906246120865152e-06, 'epoch': 0.0}                                                                                                                    
+{'eval_runtime': 380.9952, 'eval_samples_per_second': 29.368, 'eval_steps_per_second': 29.368, 'epoch': 0.0}                                                                                                               
+{'loss': 0.9468, 'grad_norm': 0.21853122115135193, 'learning_rate': 3.906242241730305e-06, 'epoch': 0.0}                                                                                                                   
+{'eval_runtime': 388.9377, 'eval_samples_per_second': 28.768, 'eval_steps_per_second': 28.768, 'epoch': 0.0}                                                                                                               
+{'loss': 1.018, 'grad_norm': 0.20022796094417572, 'learning_rate': 3.906238362595458e-06, 'epoch': 0.0}                                                                                                                    
+  0%|                                                                                                                                                                          | 30/10069900 [13:10<51206:24:19, 18.31s/it]
+ 36%|███████████████████████████████████████████████████████████████▊                                                                                                                 | 4037/11189 [02:15<04:14, 28.07it/s]
+
+
+
 FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
   warnings.warn(
 INFO:__main__:Loading data...
