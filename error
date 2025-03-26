@@ -1,0 +1,42 @@
+FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
+  warnings.warn(
+INFO:__main__:Loading data...
+yes
+INFO:__main__:Start training...
+  0%|                                                                                                                                                                                         | 0/10069900 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 144, in <module>
+    main()
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 135, in main
+    trainer.train()
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 2556, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 3718, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 3783, in compute_loss
+    outputs = model(**inputs)
+              ^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/vitmae3d.py", line 1216, in forward
+    loss = self.forward_loss(pixel_values, logits, mask, interpolate_pos_encoding=interpolate_pos_encoding)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/vitmae3d.py", line 1152, in forward_loss
+    target = self.patchify(pixel_values, interpolate_pos_encoding=interpolate_pos_encoding)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/vitmae3d.py", line 1084, in patchify
+    patchified_pixel_values = torch.einsum("ncdhwpq->ndhwpqc", patchified_pixel_values)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/functional.py", line 402, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: einsum(): the number of subscripts in the equation (7) does not match the number of dimensions (8) for operand 0 and no ellipsis was given
+  0%| 
