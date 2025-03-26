@@ -42,7 +42,6 @@ class ModelArguments:
 class DataTrainingArguments:
     train_dir: str = field(metadata={"help": "Directory containing .tif training volumes."})
     val_dir: str = field(metadata={"help": "Directory containing .tif validation volumes."})
-    crop_size: int = field(default=64)
     max_train_samples: Optional[int] = field(default=None)
     max_eval_samples: Optional[int] = field(default=None)
 
@@ -69,14 +68,15 @@ class VolumeDataset(Dataset):
 
 class RandomCrop3D:
     def __init__(self, size):
-        self.size = size
+        self.size = size  # tuple: (D, H, W)
 
     def __call__(self, vol):
         d, h, w = vol.shape
-        z = random.randint(0, d - self.size)
-        y = random.randint(0, h - self.size)
-        x = random.randint(0, w - self.size)
-        return vol[z:z+self.size, y:y+self.size, x:x+self.size]
+        zd, yd, xd = self.size
+        z = random.randint(0, d - zd)
+        y = random.randint(0, h - yd)
+        x = random.randint(0, w - xd)
+        return vol[z:z+zd, y:y+yd, x:x+xd]
 
 class Normalize3D:
     def __init__(self, mean, std):
@@ -106,7 +106,7 @@ def main():
         val_files = val_files[:data_args.max_eval_samples]
 
     transform = Compose([
-        RandomCrop3D(data_args.crop_size),
+        RandomCrop3D((32, 320, 320)),
         Normalize3D(0.5, 0.2),
     ])
 
@@ -114,9 +114,17 @@ def main():
     val_dataset = VolumeDataset(val_files, transform)
 
     config = ViTMAEConfig(
-        image_size=(data_args.crop_size,) * 3,
-        patch_size=(16, 16, 16),
+        image_size=(32, 320, 320),
+        patch_size=(8, 16, 16),
         num_channels=1,
+        hidden_size=192,
+        num_hidden_layers=8,
+        num_attention_heads=6,
+        intermediate_size=768,
+        decoder_hidden_size=512,
+        decoder_num_hidden_layers=4,
+        decoder_num_attention_heads=8,
+        decoder_intermediate_size=2048,
         mask_ratio=model_args.mask_ratio,
         norm_pix_loss=model_args.norm_pix_loss
     )
