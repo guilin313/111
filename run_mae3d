@@ -1,0 +1,136 @@
+#!/usr/bin/env python
+# coding=utf-8
+
+import os
+import sys
+import logging
+import random
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import Dataset
+from torchvision.transforms import Compose
+from dataclasses import dataclass, field
+from typing import Optional, List
+from transformers import HfArgumentParser, Trainer, TrainingArguments
+from vitmae3d import ViTMAEForPreTraining, ViTMAEConfig
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+class ModelArguments:
+    config_path: Optional[str] = field(default=None)
+    model_path: Optional[str] = field(default=None)
+    mask_ratio: float = field(default=0.75)
+    norm_pix_loss: bool = field(default=True)
+
+@dataclass
+class DataTrainingArguments:
+    train_dir: str = field(metadata={"help": "Directory containing .tif training volumes."})
+    val_dir: str = field(metadata={"help": "Directory containing .tif validation volumes."})
+    crop_size: int = field(default=64)
+    max_train_samples: Optional[int] = field(default=None)
+    max_eval_samples: Optional[int] = field(default=None)
+
+@dataclass
+class CustomTrainingArguments(TrainingArguments):
+    base_learning_rate: float = field(
+        default=1e-3, metadata={"help": "Absolute LR = base_lr * batch_size / 256"}
+    )
+
+class VolumeDataset(Dataset):
+    def __init__(self, file_list, transform=None):
+        self.file_list = file_list
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        volume = tifffile.imread(self.file_list[idx]).astype(np.float32)
+        volume = torch.tensor(volume)  # [D, H, W]
+        if self.transform:
+            volume = self.transform(volume)
+        return {"pixel_values": volume}
+
+class RandomCrop3D:
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, vol):
+        d, h, w = vol.shape
+        z = random.randint(0, d - self.size)
+        y = random.randint(0, h - self.size)
+        x = random.randint(0, w - self.size)
+        return vol[z:z+self.size, y:y+self.size, x:x+self.size]
+
+class Normalize3D:
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, vol):
+        return (vol - self.mean) / self.std
+
+def collate_fn(examples):
+    batch = torch.stack([ex["pixel_values"] for ex in examples])  # [B, D, H, W]
+    return {"pixel_values": batch.unsqueeze(1)}  # [B, 1, D, H, W]
+
+def main():
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, CustomTrainingArguments))
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Loading data...")
+
+    train_files = [os.path.join(data_args.train_dir, f) for f in os.listdir(data_args.train_dir) if f.endswith(".tif")]
+    val_files = [os.path.join(data_args.val_dir, f) for f in os.listdir(data_args.val_dir) if f.endswith(".tif")]
+
+    if data_args.max_train_samples:
+        train_files = train_files[:data_args.max_train_samples]
+    if data_args.max_eval_samples:
+        val_files = val_files[:data_args.max_eval_samples]
+
+    transform = Compose([
+        RandomCrop3D(data_args.crop_size),
+        Normalize3D(0.5, 0.2),
+    ])
+
+    train_dataset = VolumeDataset(train_files, transform)
+    val_dataset = VolumeDataset(val_files, transform)
+
+    config = ViTMAEConfig(
+        image_size=(data_args.crop_size,) * 3,
+        patch_size=(16, 16, 16),
+        num_channels=1,
+        mask_ratio=model_args.mask_ratio,
+        norm_pix_loss=model_args.norm_pix_loss
+    )
+
+    if model_args.model_path:
+        model = ViTMAEForPreTraining.from_pretrained(model_args.model_path, config=config)
+    else:
+        model = ViTMAEForPreTraining(config)
+
+    total_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
+    training_args.learning_rate = training_args.base_learning_rate * total_batch_size / 256
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        data_collator=collate_fn,
+    )
+
+    logger.info("Start training...")
+    trainer.train()
+    trainer.save_model()
+
+    logger.info("Evaluating...")
+    metrics = trainer.evaluate()
+    trainer.log_metrics("eval", metrics)
+    trainer.save_metrics("eval", metrics)
+
+if __name__ == "__main__":
+    main()
