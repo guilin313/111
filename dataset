@@ -109,3 +109,57 @@ class TIFDataset(Dataset):
 def get_dataloader(data_dir, batch_size=4, augment=True):
     dataset = TIFDataset(data_dir, augment=augment)
     return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+
+
+import os
+import zipfile
+import tarfile
+import gzip
+import shutil
+
+def extract_archive(archive_path, output_dir):
+    if archive_path.endswith(".zip"):
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            zip_ref.extractall(output_dir)
+    elif archive_path.endswith((".tar.gz", ".tgz", ".tar")):
+        with tarfile.open(archive_path, 'r:*') as tar_ref:
+            tar_ref.extractall(output_dir)
+    elif archive_path.endswith(".gz") and not archive_path.endswith(".tar.gz"):
+        with gzip.open(archive_path, 'rb') as f_in:
+            out_path = os.path.join(output_dir, os.path.basename(archive_path)[:-3])
+            with open(out_path, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+    else:
+        print(f"Unsupported format: {archive_path}")
+
+def extract_all_in_dir(target_dir):
+    for fname in os.listdir(target_dir):
+        fpath = os.path.join(target_dir, fname)
+        if not os.path.isfile(fpath):
+            continue
+
+        name, ext = os.path.splitext(fname)
+        # Handle .tar.gz and .tgz specially
+        if fname.endswith(".tar.gz") or fname.endswith(".tgz"):
+            name = fname.rsplit('.', 2)[0]
+        elif fname.endswith(".tar"):
+            name = fname.rsplit('.', 1)[0]
+        elif fname.endswith(".gz") and not fname.endswith(".tar.gz"):
+            name = fname.rsplit('.', 1)[0]
+        elif fname.endswith(".zip"):
+            name = fname.rsplit('.', 1)[0]
+        else:
+            continue
+
+        out_dir = os.path.join(target_dir, name)
+        os.makedirs(out_dir, exist_ok=True)
+        print(f"Extracting {fname} to {out_dir}...")
+        extract_archive(fpath, out_dir)
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir", help="Path to directory containing archives")
+    args = parser.parse_args()
+
+    extract_all_in_dir(args.dir)
