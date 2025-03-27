@@ -1,0 +1,60 @@
+import os
+import h5py
+import numpy as np
+import tifffile as tiff
+
+# 设置源和目标文件夹
+source_directory = "path/to/source"  # 修改为实际 h5 文件所在目录
+target_directory = "path/to/target"  # 修改为实际存放 tif 的目录
+
+def is_abnormal_image(data):
+    """
+    检测图像是否为异常（全黑或全白）。
+    """
+    min_val, max_val = np.min(data), np.max(data)
+    return min_val == max_val  # 全黑或全白的情况
+
+def convert_h5_to_tif(source_file, target_file):
+    """
+    读取 .h5 文件中的数据，并转换为 .tif 文件（如果数据正常）。
+    """
+    try:
+        with h5py.File(source_file, "r") as h5f:
+            if "data" not in h5f:
+                print(f"⚠️ 警告：{source_file} 中未找到 'data' 关键字，跳过该文件。")
+                return
+            
+            data = h5f["data"][:]
+            if data.ndim != 3:  # 确保是 3D 数据
+                print(f"⚠️ 警告：{source_file} 不是三维数据，跳过该文件。")
+                return
+            
+            if is_abnormal_image(data):
+                print(f"🚫 异常文件（全黑/全白）：{source_file}，跳过保存。")
+                return
+
+            # 保存为 TIFF
+            tiff.imwrite(target_file, data.astype(np.float32))
+            print(f"✅ 转换成功：{source_file} → {target_file}")
+
+    except Exception as e:
+        print(f"❌ 处理 {source_file} 时出错：{e}")
+
+def process_directory(source_dir, target_dir):
+    """
+    遍历源文件夹，查找 .h5 文件并转换为 .tif。
+    """
+    for root, _, files in os.walk(source_dir):
+        # 计算目标路径
+        relative_path = os.path.relpath(root, source_dir)
+        target_subdir = os.path.join(target_dir, relative_path)
+        os.makedirs(target_subdir, exist_ok=True)  # 创建相同结构的目标文件夹
+
+        for file in files:
+            if file.endswith(".h5"):
+                source_file = os.path.join(root, file)
+                target_file = os.path.join(target_subdir, file.replace(".h5", ".tif"))
+                convert_h5_to_tif(source_file, target_file)
+
+if __name__ == "__main__":
+    process_directory(source_directory, target_directory)
