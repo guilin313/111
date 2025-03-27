@@ -1,3 +1,11 @@
+def log_dataset_samples(dataset, writer, tag_prefix="train", num_samples=5):
+    for idx in range(min(num_samples, len(dataset))):
+        data = dataset[idx]["pixel_values"]  # shape: [1, D, H, W]
+        image = data[0, data.shape[1] // 2]   # 取中间层 [H, W]
+        writer.add_image(f"{tag_prefix}_slice_{idx}", image.unsqueeze(0), global_step=0)
+
+
+
 import os
 import shutil
 import random
