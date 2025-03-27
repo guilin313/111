@@ -1,3 +1,45 @@
+import os
+import numpy as np
+import tifffile as tiff
+
+def gather_tif_files(root_dir):
+    """收集指定目录下所有子文件夹中的 TIFF 文件路径"""
+    files = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for f in filenames:
+            if f.endswith(".tif"):
+                files.append(os.path.join(dirpath, f))
+    return files
+
+def compute_mean_std(tif_files):
+    """计算 TIFF 图像数据的均值 (mean) 和标准差 (std)"""
+    mean_sum = 0
+    std_sum = 0
+    total_pixels = 0
+
+    for file in tif_files:
+        img = tiff.imread(file).astype(np.float32)  # 读取并转换数据类型
+        mean_img = np.mean(img)
+        std_img = np.std(img)
+
+        mean_sum += mean_img * img.size
+        std_sum += std_img * img.size
+        total_pixels += img.size
+
+    mean = mean_sum / total_pixels
+    std = std_sum / total_pixels
+    return mean, std
+
+# 运行代码
+root_dir = "your_dataset_folder"  # 替换为你的数据集文件夹路径
+tif_files = gather_tif_files(root_dir)  # 获取所有 TIFF 文件
+mean, std = compute_mean_std(tif_files)  # 计算均值和标准差
+
+print(f"Mean: {mean:.6f}, Std: {std:.6f}")
+
+
+
+
 def compute_mean_std(root_dir, cache_file="mean_std_cache.json"):
     if os.path.exists(cache_file):
         try:
