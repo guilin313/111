@@ -1,3 +1,9 @@
+    writer = SummaryWriter(log_dir=os.path.join(training_args.output_dir, "tb_samples"))
+    log_dataset_samples(train_dataset, writer, tag_prefix="train", num_samples=5)
+    log_dataset_samples(val_dataset, writer, tag_prefix="val", num_samples=3)
+    writer.close()
+    logger.info("✅ Wrote sample slices to TensorBoard.")
+
 def log_dataset_samples(dataset, writer, tag_prefix="train", num_samples=5):
     for idx in range(min(num_samples, len(dataset))):
         data = dataset[idx]["pixel_values"]  # shape: [1, D, H, W]
