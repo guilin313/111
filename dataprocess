@@ -1,4 +1,48 @@
 import os
+import shutil
+import random
+from pathlib import Path
+
+# === 可修改参数 ===
+TRAIN_DIR = "./data/train"
+VAL_DIR = "./data/val"
+RATIO = 0.1            # 抽取 10% 作为验证集
+SEED = 42              # 固定随机种子保证可复现
+
+def split_val_from_train(train_dir, val_dir, ratio=0.1, seed=42):
+    random.seed(seed)
+
+    train_dir = Path(train_dir)
+    val_dir = Path(val_dir)
+    val_dir.mkdir(parents=True, exist_ok=True)
+
+    for subfolder in train_dir.iterdir():
+        if not subfolder.is_dir():
+            continue
+
+        tif_files = list(subfolder.glob("*.tif"))
+        if len(tif_files) == 0:
+            continue
+
+        val_count = max(1, int(len(tif_files) * ratio))
+        val_samples = random.sample(tif_files, val_count)
+
+        val_subfolder = val_dir / subfolder.name
+        val_subfolder.mkdir(parents=True, exist_ok=True)
+
+        print(f"📦 {subfolder.name}: moving {val_count}/{len(tif_files)} tif images to {val_subfolder}")
+
+        for fpath in val_samples:
+            shutil.move(str(fpath), str(val_subfolder / fpath.name))
+
+    print("✅ Validation set creation complete.")
+
+if __name__ == "__main__":
+    split_val_from_train(TRAIN_DIR, VAL_DIR, RATIO, SEED)
+
+
+
+import os
 import numpy as np
 import tifffile as tiff
 
