@@ -3,7 +3,7 @@ import numpy as np
 import tifffile as tiff
 
 def gather_tif_files(root_dir):
-    """收集指定目录下所有子文件夹中的 TIFF 文件路径"""
+    """收集所有 TIFF 文件路径"""
     files = []
     for dirpath, _, filenames in os.walk(root_dir):
         for f in filenames:
@@ -11,40 +11,38 @@ def gather_tif_files(root_dir):
                 files.append(os.path.join(dirpath, f))
     return files
 
-def compute_mean_std_batched(tif_files, batch_size=100):
-    """分批计算 TIFF 图像数据的均值 (mean) 和标准差 (std)"""
+def compute_mean_std_slices(tif_files):
+    """逐切片计算 TIFF 数据的 Mean & Std，避免一次性加载整张图"""
     mean_sum = 0
     std_sum = 0
     total_pixels = 0
 
-    for i in range(0, len(tif_files), batch_size):
-        batch_files = tif_files[i:i + batch_size]  # 取当前 batch
-        batch_data = []
+    for idx, file in enumerate(tif_files):
+        img = tiff.imread(file).astype(np.float32)  # 读取整张 TIFF
+        num_slices = img.shape[0]  # 获取切片数（100）
+        
+        for i in range(num_slices):  # 逐切片计算
+            slice_data = img[i]  # 取出第 i 个切片 (1024×1024)
+            mean_slice = np.mean(slice_data)
+            std_slice = np.std(slice_data)
 
-        for file in batch_files:
-            img = tiff.imread(file).astype(np.float32)  # 读取并转换数据类型
-            batch_data.append(img)
+            mean_sum += mean_slice * slice_data.size
+            std_sum += std_slice * slice_data.size
+            total_pixels += slice_data.size
 
-        batch_data = np.concatenate(batch_data, axis=0)  # 拼接为一个 batch
-        mean_batch = np.mean(batch_data)
-        std_batch = np.std(batch_data)
-
-        mean_sum += mean_batch * batch_data.size
-        std_sum += std_batch * batch_data.size
-        total_pixels += batch_data.size
-
-        print(f"Processed {i + len(batch_files)}/{len(tif_files)} images...")  # 进度条
+        print(f"Processed {idx+1}/{len(tif_files)} files...")  # 进度条
 
     mean = mean_sum / total_pixels
     std = std_sum / total_pixels
     return mean, std
 
 # 运行代码
-root_dir = "your_dataset_folder"  # 替换为你的数据集文件夹路径
+root_dir = "your_dataset_folder"  # 替换为实际路径
 tif_files = gather_tif_files(root_dir)  # 获取所有 TIFF 文件
-mean, std = compute_mean_std_batched(tif_files, batch_size=100)  # 计算均值和标准差
+mean, std = compute_mean_std_slices(tif_files)  # 计算均值 & 标准差
 
 print(f"Mean: {mean:.6f}, Std: {std:.6f}")
+
 
 
 
