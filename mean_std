@@ -1,0 +1,32 @@
+def compute_mean_std(root_dir, cache_file="mean_std_cache.json"):
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r") as f:
+                cached = json.load(f)
+            if cached.get("dir") == os.path.abspath(root_dir):
+                logger.info("Loaded mean/std from cache.")
+                return cached["mean"], cached["std"]
+        except Exception as e:
+            logger.warning(f"Failed to load mean/std cache: {e}")
+
+    all_voxels = []
+    for root, _, files in os.walk(root_dir):
+        for fname in files:
+            if fname.endswith(".tif"):
+                fpath = os.path.join(root, fname)
+                try:
+                    vol = tifffile.imread(fpath).astype(np.float32)
+                    all_voxels.append(vol.flatten())
+                except Exception as e:
+                    print(f"Warning: failed to read {fpath}: {e}")
+    all_voxels = np.concatenate(all_voxels)
+    mean = float(np.mean(all_voxels))
+    std = float(np.std(all_voxels))
+
+    try:
+        with open(cache_file, "w") as f:
+            json.dump({"dir": os.path.abspath(root_dir), "mean": mean, "std": std}, f)
+    except Exception as e:
+        logger.warning(f"Failed to write mean/std cache: {e}")
+
+    return mean, std
