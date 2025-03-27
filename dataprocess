@@ -1,4 +1,100 @@
 import os
+import numpy as np
+import tifffile as tiff
+
+# 源文件夹和目标文件夹（请替换成实际路径）
+source_directory = "path/to/source"  # 原始 tif 文件所在目录
+target_directory = "path/to/target"  # 裁剪后 tif 文件存放目录
+
+def is_mostly_black(image, threshold=0.1):
+    """判断图像是否至少有 `threshold` 比例为黑色（像素值为0）"""
+    total_pixels = np.prod(image.shape)  # 计算总像素数
+    black_pixels = np.sum(image == 0)  # 计算黑色像素数
+    return (black_pixels / total_pixels) > threshold  # 是否超过 10%
+
+def crop_and_save_tif(source_file, target_file, crop_size=(32, 320, 320), black_threshold=0.1):
+    """裁剪 TIFF 文件并保存，丢弃黑色区域过多的裁剪块"""
+    try:
+        # 读取 TIFF 文件
+        data = tiff.imread(source_file)
+
+        # 确保数据是 3D
+        if data.ndim != 3:
+            print(f"🚫 {source_file} 不是 3D 图像，跳过")
+            return
+
+        # 获取原始尺寸
+        depth, height, width = data.shape
+        crop_d, crop_h, crop_w = crop_size
+
+        # 计算可裁剪的区域
+        d_crops = depth // crop_d
+        h_crops = height // crop_h
+        w_crops = width // crop_w
+
+        if d_crops == 0 or h_crops == 0 or w_crops == 0:
+            print(f"⚠️ {source_file} 尺寸 {data.shape} 过小，无法裁剪，跳过")
+            return
+
+        print(f"✂️ {source_file} -> 预计裁剪 {d_crops * h_crops * w_crops} 片")
+
+        # 遍历裁剪
+        cropped_images = []
+        for d in range(d_crops):
+            for h in range(h_crops):
+                for w in range(w_crops):
+                    cropped = data[
+                        d * crop_d : (d + 1) * crop_d,
+                        h * crop_h : (h + 1) * crop_h,
+                        w * crop_w : (w + 1) * crop_w,
+                    ]
+
+                    # 过滤掉黑色区域超过 10% 的图像
+                    if is_mostly_black(cropped, threshold=black_threshold):
+                        print(f"⚠️ 跳过全黑区域过多的裁剪块 ({d}, {h}, {w})")
+                        continue  
+
+                    cropped_images.append(cropped)
+
+        # 保存裁剪后的数据
+        if cropped_images:
+            tiff.imwrite(target_file, np.array(cropped_images, dtype=np.float32))
+            print(f"✅ 已保存: {target_file}")
+        else:
+            print(f"⚠️ {source_file} 没有有效裁剪数据")
+
+    except Exception as e:
+        print(f"❌ 处理 {source_file} 失败: {e}")
+
+def process_directory(source_dir, target_dir, crop_size=(32, 320, 320)):
+    """遍历文件夹，裁剪所有 TIFF 并保存"""
+    tif_count = 0
+
+    for root, _, files in os.walk(source_dir):
+        relative_path = os.path.relpath(root, source_dir)
+        target_subdir = os.path.join(target_dir, relative_path)
+        os.makedirs(target_subdir, exist_ok=True)  # 创建对应的目标文件夹
+
+        for file in files:
+            if file.endswith(".tif"):
+                tif_count += 1
+                source_file = os.path.join(root, file)
+                target_file = os.path.join(target_subdir, file.replace(".tif", "_cropped.tif"))
+                crop_and_save_tif(source_file, target_file, crop_size)
+    
+    if tif_count == 0:
+        print(f"⚠️ 未找到任何 .tif 文件，请检查路径: {source_dir}")
+
+if __name__ == "__main__":
+    process_directory(source_directory, target_directory)
+
+
+
+
+
+
+
+import os
 import h5py
 import numpy as np
 import tifffile as tiff
