@@ -3,58 +3,81 @@ import h5py
 import numpy as np
 import tifffile as tiff
 
-# 设置源和目标文件夹
-source_directory = "path/to/source"  # 修改为实际 h5 文件所在目录
-target_directory = "path/to/target"  # 修改为实际存放 tif 的目录
+source_directory = "path/to/source"  # 请替换为你的 h5 文件所在目录
+target_directory = "path/to/target"  # 请替换为目标 tif 存放目录
 
-def is_abnormal_image(data):
-    """
-    检测图像是否为异常（全黑或全白）。
-    """
+def is_abnormal_image(data, black_threshold=0.33):
+    """检测图像是否异常（全黑、全白 或者 1/3 以上区域是黑的）。"""
     min_val, max_val = np.min(data), np.max(data)
-    return min_val == max_val  # 全黑或全白的情况
+
+    # 🚫 全黑或全白的情况
+    if min_val == max_val:
+        print(f"🚫 该数据是全黑或全白")
+        return True
+
+    # 计算黑色像素比例
+    black_pixels = np.sum(data == min_val)  # 统计黑色像素
+    total_pixels = data.size
+    black_ratio = black_pixels / total_pixels
+
+    print(f"📊 黑色区域占比: {black_ratio:.2%}")
+
+    if black_ratio > black_threshold:
+        print(f"🚫 黑色区域超过 {black_threshold*100:.0f}% ({black_ratio:.2%})，跳过")
+        return True
+
+    return False
 
 def convert_h5_to_tif(source_file, target_file):
-    """
-    读取 .h5 文件中的数据，并转换为 .tif 文件（如果数据正常）。
-    """
+    """读取 .h5 文件并转换为 .tif，如果数据异常则跳过。"""
     try:
         with h5py.File(source_file, "r") as h5f:
-            if "data" not in h5f:
-                print(f"⚠️ 警告：{source_file} 中未找到 'data' 关键字，跳过该文件。")
+            print(f"🔍 处理文件：{source_file}")
+
+            # 检查 'main' 关键字是否存在
+            if "main" not in h5f:
+                print(f"⚠️ {source_file} 未找到 'main'，实际 keys：{list(h5f.keys())}，跳过")
                 return
             
-            data = h5f["data"][:]
-            if data.ndim != 3:  # 确保是 3D 数据
-                print(f"⚠️ 警告：{source_file} 不是三维数据，跳过该文件。")
+            # 读取数据
+            data = h5f["main"][:]
+            print(f"📏 数据形状：{data.shape}")
+
+            # 确保是 3D 数据
+            if data.ndim != 3:
+                print(f"🚫 {source_file} 不是 3D 数据，跳过")
                 return
-            
+
+            # 判断是否为异常图像
             if is_abnormal_image(data):
-                print(f"🚫 异常文件（全黑/全白）：{source_file}，跳过保存。")
+                print(f"🚫 {source_file} 是异常图像，跳过")
                 return
 
             # 保存为 TIFF
             tiff.imwrite(target_file, data.astype(np.float32))
-            print(f"✅ 转换成功：{source_file} → {target_file}")
+            print(f"✅ {source_file} → {target_file}")
 
     except Exception as e:
         print(f"❌ 处理 {source_file} 时出错：{e}")
 
 def process_directory(source_dir, target_dir):
-    """
-    遍历源文件夹，查找 .h5 文件并转换为 .tif。
-    """
+    """遍历源文件夹，查找 .h5 并转换为 .tif。"""
+    h5_files_count = 0
+
     for root, _, files in os.walk(source_dir):
-        # 计算目标路径
         relative_path = os.path.relpath(root, source_dir)
         target_subdir = os.path.join(target_dir, relative_path)
-        os.makedirs(target_subdir, exist_ok=True)  # 创建相同结构的目标文件夹
+        os.makedirs(target_subdir, exist_ok=True)  # 确保子文件夹存在
 
         for file in files:
             if file.endswith(".h5"):
+                h5_files_count += 1
                 source_file = os.path.join(root, file)
                 target_file = os.path.join(target_subdir, file.replace(".h5", ".tif"))
                 convert_h5_to_tif(source_file, target_file)
+    
+    if h5_files_count == 0:
+        print(f"⚠️ 未在 {source_dir} 发现 .h5 文件，请检查路径是否正确！")
 
 if __name__ == "__main__":
     process_directory(source_directory, target_directory)
