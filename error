@@ -1,3 +1,6 @@
+tensorboard --logdir ./output_dir/tb_samples
+
+
 AssertionError: size of input tensor and input format are different.         tensor shape: (1, 320), input_format: CHW
 
 
