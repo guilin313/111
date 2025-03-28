@@ -148,7 +148,7 @@ def main():
 
     transform = Compose([
         RandomCrop3D((32, 320, 320)),
-        Normalize3D(141.530767/255, 45.614676/255),
+        Normalize3D(143.510583/255, 45.286453/255),
     ])
 
     train_dataset = VolumeDataset(train_files, transform)
@@ -184,6 +184,23 @@ def main():
     else:
         model = ViTMAEForPreTraining(config)
 
+    param_report_path = os.path.join(training_args.output_dir, "model_params.txt")
+    with open(param_report_path, "w") as f:
+        total_params = 0
+        trainable_params = 0
+        f.write("Model Parameters:\n")
+        for name, param in model.named_parameters():
+            param_count = param.numel()
+            total_params += param_count
+            if param.requires_grad:
+                trainable_params += param_count
+            f.write(f"{name:60s} | shape: {str(tuple(param.shape)):20s} | requires_grad={param.requires_grad}\n")
+        total_mb = total_params * 4 / 1024 / 1024  # float32 占 4 字节
+        f.write(f"\n✅ Total parameters: {total_params:,} (~{total_mb:.2f} MB)\n")
+        f.write(f"🟢 Trainable parameters: {trainable_params:,}\n")
+        f.write(f"🟡 Non-trainable parameters: {total_params - trainable_params:,}\n")
+    logger.info(f"✅ Model parameter details saved to {param_report_path}")
+
     total_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
     training_args.learning_rate = training_args.base_learning_rate * total_batch_size / 256
 
@@ -206,3 +223,20 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#命令行：
+python run_mae_3d.py \
+  --train_dir ./data/train \
+  --val_dir ./data/val \
+  --per_device_train_batch_size 4 \
+  --per_device_eval_batch_size 4 \
+  --num_train_epochs 100 \
+  --output_dir ./output/vitmae3d \
+  --logging_dir ./output/vitmae3d/logs \
+  --base_learning_rate 1e-3 \
+  --logging_steps 10 \
+  --save_strategy="steps" \
+  --save_steps=10000 \
+  --eval_steps 10000 \
+  --evaluation_strategy steps \
+  --save_total_limit 3
