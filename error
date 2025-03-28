@@ -1,3 +1,21 @@
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 225, in <module>
+    main()
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 133, in main
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/hf_argparser.py", line 358, in parse_args_into_dataclasses
+    obj = dtype(**inputs)
+          ^^^^^^^^^^^^^^^
+  File "<string>", line 136, in __init__
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/training_args.py", line 1678, in __post_init__
+    raise ValueError(
+ValueError: --load_best_model_at_end requires the save and eval strategy to match, but found
+- Evaluation strategy: IntervalStrategy.STEPS
+- Save strategy: SaveStrategy.EPOCH
+
+
 tensorboard --logdir ./output_dir/tb_samples
 
 
