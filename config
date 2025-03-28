@@ -1,3 +1,25 @@
+/home/guilin/PycharmProjects/MAE3d/data
+eno1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.15.57.20  netmask 255.255.248.0  broadcast 10.15.63.255
+        inet6 fe80::11d9:22fa:a899:15bc  prefixlen 64  scopeid 0x20<link>
+        ether 24:4b:fe:7d:d2:4f  txqueuelen 1000  (Ethernet)
+        RX packets 5947556  bytes 797922348 (797.9 MB)
+        RX errors 0  dropped 286631  overruns 0  frame 0
+        TX packets 143743  bytes 15359447 (15.3 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+        device interrupt 16  memory 0x81200000-81220000  
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 19640  bytes 29840496 (29.8 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 19640  bytes 29840496 (29.8 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+
 Model Parameters:
 vit.embeddings.cls_token                                     | shape: (1, 1, 768)          | requires_grad=True
 vit.embeddings.position_embeddings                           | shape: (1, 801, 768)        | requires_grad=False
