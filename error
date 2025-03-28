@@ -1,4 +1,13 @@
-  warnings.warn(
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 225, in <module>
+    main()
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 197, in main
+    f.write(f"{name:60s} | shape: {tuple(param.shape):20s} | requires_grad={param.requires_grad}\n")
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to tuple.__format__
+
+
+warnings.warn(
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 225, in <module>
     main()
