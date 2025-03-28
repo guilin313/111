@@ -1,3 +1,22 @@
+    param_report_path = os.path.join(training_args.output_dir, "model_params.txt")
+    with open(param_report_path, "w") as f:
+        total_params = 0
+        trainable_params = 0
+        f.write("Model Parameters:\n")
+        for name, param in model.named_parameters():
+            param_count = param.numel()
+            total_params += param_count
+            if param.requires_grad:
+                trainable_params += param_count
+            f.write(f"{name:60s} | shape: {tuple(param.shape):20s} | requires_grad={param.requires_grad}\n")
+        f.write(f"\n✅ Total parameters: {total_params:,}\n")
+        f.write(f"🟢 Trainable parameters: {trainable_params:,}\n")
+        f.write(f"🟡 Non-trainable parameters: {total_params - trainable_params:,}\n")
+    logger.info(f"✅ Model parameter details saved to {param_report_path}")
+
+
+
+
 #!/usr/bin/env python
 # coding=utf-8
 
