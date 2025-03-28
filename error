@@ -1,3 +1,31 @@
+Traceback (most recent call last):                                                                                                                                                                                         
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 3162, in _determine_best_metric
+    metric_value = metrics[metric_to_check]
+                   ~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'eval_accuracy'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 225, in <module>
+    main()
+  File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 216, in main
+    trainer.train()
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 2620, in _inner_training_loop
+    self._maybe_log_save_evaluate(
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 3094, in _maybe_log_save_evaluate
+    is_new_best_metric = self._determine_best_metric(metrics=metrics, trial=trial)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/trainer.py", line 3164, in _determine_best_metric
+    raise KeyError(
+KeyError: "The `metric_for_best_model` training argument is set to 'eval_accuracy', which is not found in the evaluation metrics. The available evaluation metrics are: ['eval_runtime', 'eval_samples_per_second', 'eval_steps_per_second', 'epoch']. Consider changing the `metric_for_best_model` via the TrainingArguments."
+
+
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/run_mae_3d.py", line 225, in <module>
     main()
