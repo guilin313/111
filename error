@@ -1,3 +1,19 @@
+    final_reconstruction[mask_cpu] = reconstructed[mask_cpu]
+                                     ~~~~~~~~~~~~~^^^^^^^^^^
+IndexError: boolean index did not match indexed array along dimension 0; dimension is 32 but corresponding boolean dimension is 800
+(pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/MAE3d$ python inference.py
+Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1780000
+yes
+Reconstruction loss: 0.4297
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference.py", line 63, in <module>
+    final_reconstruction[mask_cpu] = reconstructed[mask_cpu]
+                                     ~~~~~~~~~~~~~^^^^^^^^^^
+IndexError: boolean index did not match indexed array along dimension 0; dimension is 32 but corresponding boolean dimension is 800
+
+
+
+
 (pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/MAE3d$ python inference.py
 Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1670000
 yes
