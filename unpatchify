@@ -1,3 +1,49 @@
+    def patchify(self, pixel_values, interpolate_pos_encoding: bool = False):
+        """
+        Args:
+            pixel_values (`torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`):
+                Pixel values.
+            interpolate_pos_encoding (`bool`, *optional*, default `False`):
+                interpolation flag passed during the forward pass.
+
+        Returns:
+            `torch.FloatTensor` of shape `(batch_size, num_patches, patch_size**2 * num_channels)`:
+                Patchified pixel values.
+        """
+        patch_size, num_channels = self.config.patch_size, self.config.num_channels
+        # sanity checks
+        pd,ph,pw = self.config.patch_size
+        if not interpolate_pos_encoding and (
+            pixel_values.shape[2] %pd !=0 or
+            pixel_values.shape[3] %ph !=0 or
+            pixel_values.shape[4] %pw !=0
+        ):
+            raise ValueError("Input size must be divisible by the patch size")
+        if pixel_values.shape[1] != num_channels:
+            raise ValueError(
+                "Make sure the number of channels of the pixel values is equal to the one set in the configuration"
+            )
+
+        # patchify
+        batch_size = pixel_values.shape[0]
+        num_patches_d = pixel_values.shape[2] // pd
+        num_patches_h = pixel_values.shape[3] // ph
+        num_patches_w = pixel_values.shape[4] // pw
+
+        patchified_pixel_values = pixel_values.reshape(
+            batch_size, num_channels,
+            num_patches_d,pd,
+            num_patches_h, ph,
+            num_patches_w, pw
+        )
+        patch_volume = patch_size[0] * patch_size[1] * patch_size[2]
+        output_dim = patch_volume * num_channels
+        patchified_pixel_values = torch.einsum("ncdphqkw->ndhkpqwc", patchified_pixel_values)
+        patchified_pixel_values = patchified_pixel_values.reshape(
+            batch_size, num_patches_d * num_patches_h * num_patches_w, output_dim
+        )
+        return patchified_pixel_values
+
     def unpatchify(self, patchified_pixel_values, original_image_size: Optional[Tuple[int, int]] = None):
         """
         Args:
@@ -14,7 +60,7 @@
         original_image_size = (
             original_image_size
             if original_image_size is not None
-            else (self.config.image_size, self.config.image_size, self.config.image_size)
+            else tuple(self.config.image_size)
         )
         pd, ph, pw = self.config.patch_size
         original_depth, original_height, original_width = original_image_size
@@ -35,7 +81,7 @@
             pd,ph,pw,
             num_channels,
         )
-        patchified_pixel_values = torch.einsum("ndhwpqc->ncdhwpq", patchified_pixel_values)
+        patchified_pixel_values = torch.einsum("ndhkpqwc->ncdphqkw", patchified_pixel_values)
 
         pixel_values = patchified_pixel_values.reshape(
             batch_size,
