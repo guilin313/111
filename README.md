@@ -1,3 +1,4 @@
+![reconstruction_triplet](https://github.com/user-attachments/assets/1fc14761-d20d-43a6-9878-ee4eb5959760)
 ![Screenshot from 2025-03-21 11-04-10](https://github.com/user-attachments/assets/9ca2d639-7ed8-4c9a-840b-897def511b5a)
 ![Screenshot from 2025-03-21 14-02-54](https://github.com/user-attachments/assets/0614289c-5f89-4a4c-9dde-6156a42d40fc)
 
