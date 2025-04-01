@@ -1,0 +1,47 @@
+    def unpatchify(self, patchified_pixel_values, original_image_size: Optional[Tuple[int, int]] = None):
+        """
+        Args:
+            patchified_pixel_values (`torch.FloatTensor` of shape `(batch_size, num_patches, patch_size**2 * num_channels)`:
+                Patchified pixel values.
+            original_image_size (`Tuple[int, int]`, *optional*):
+                Original image size.
+
+        Returns:
+            `torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`:
+                Pixel values.
+        """
+        patch_size, num_channels = self.config.patch_size, self.config.num_channels
+        original_image_size = (
+            original_image_size
+            if original_image_size is not None
+            else (self.config.image_size, self.config.image_size, self.config.image_size)
+        )
+        pd, ph, pw = self.config.patch_size
+        original_depth, original_height, original_width = original_image_size
+        num_patches_d = original_depth // pd
+        num_patches_h = original_height // ph
+        num_patches_w = original_width // pw
+        # sanity check
+        if num_patches_d * num_patches_h * num_patches_w != patchified_pixel_values.shape[1]:
+            raise ValueError(
+                f"The number of patches in the patchified pixel values {patchified_pixel_values.shape[1]}, does not match the number of patches on original image {num_patches_h}*{num_patches_w}"
+            )
+
+        # unpatchify
+        batch_size = patchified_pixel_values.shape[0]
+        patchified_pixel_values = patchified_pixel_values.reshape(
+            batch_size,
+            num_patches_d,num_patches_h,num_patches_w,
+            pd,ph,pw,
+            num_channels,
+        )
+        patchified_pixel_values = torch.einsum("ndhwpqc->ncdhwpq", patchified_pixel_values)
+
+        pixel_values = patchified_pixel_values.reshape(
+            batch_size,
+            num_channels,
+            num_patches_d * pd,
+            num_patches_h * ph,
+            num_patches_w * pw,
+        )
+        return pixel_values
