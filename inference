@@ -8,7 +8,7 @@ from transformers import ViTMAEConfig
 from vitmae3d import ViTMAEForPreTraining
 
 # === 配置 ===
-CHECKPOINT_PATH = "/home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1670000"  # 模型 checkpoint 路径
+CHECKPOINT_PATH = "/home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1730000"  # 模型 checkpoint 路径
 TIF_IMAGE_PATH = "/home/guilin/PycharmProjects/MAE3d/data/val/FAFB_crop_hdf_2/0_0_900_1000_14.tif"                         # 输入 3D tif 图像路径
 PATCH_SIZE = (16, 16, 16)
 CROP_SIZE = (32, 320, 320)
@@ -18,15 +18,14 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # === 加载模型 ===
 print("Loading model from:", CHECKPOINT_PATH)
-config = ViTMAEForPreTraining.from_pretrained(CHECKPOINT_PATH)
-config.image_size = tuple(config.image_size)
-model = ViTMAEForPreTraining(config)
+model = ViTMAEForPreTraining.from_pretrained(CHECKPOINT_PATH)
+model.config.image_size = tuple(model.config.image_size)
 model.eval()
 model.to(DEVICE)
 
 # === 读取 tif 图像 ===
 volume = tifffile.imread(TIF_IMAGE_PATH).astype(np.float32)  # [D, H, W]
-volume = (volume / 255.0 - MEAN) / STD
+volume = (volume / 255.0 - MEAN) / STD #归一化加标准化
 
 # === 中心裁剪 3D patch ===
 D, H, W = volume.shape
