@@ -8,8 +8,8 @@ from transformers import ViTMAEConfig
 from vitmae3d import ViTMAEForPreTraining
 
 # === 配置 ===
-CHECKPOINT_PATH = "./output/vitmae3d/checkpoint-10000"  # 模型 checkpoint 路径
-TIF_IMAGE_PATH = "./example.tif"                         # 输入 3D tif 图像路径
+CHECKPOINT_PATH = "/home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1670000"  # 模型 checkpoint 路径
+TIF_IMAGE_PATH = "/home/guilin/PycharmProjects/MAE3d/data/val/FAFB_crop_hdf_2/0_0_900_1000_14.tif"                         # 输入 3D tif 图像路径
 PATCH_SIZE = (16, 16, 16)
 CROP_SIZE = (32, 320, 320)
 MEAN = 143.510583 / 255
@@ -18,7 +18,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # === 加载模型 ===
 print("Loading model from:", CHECKPOINT_PATH)
-model = ViTMAEForPreTraining.from_pretrained(CHECKPOINT_PATH)
+config = ViTMAEForPreTraining.from_pretrained(CHECKPOINT_PATH)
+config.image_size = tuple(config.image_size)
+model = ViTMAEForPreTraining(config)
 model.eval()
 model.to(DEVICE)
 
@@ -50,7 +52,7 @@ with torch.no_grad():
 patchified = model.patchify(tensor_input)  # [1, N, patch_dim]
 B, N, P = patchified.shape
 masked_patchified = patchified.clone()
-masked_patchified[0][mask.bool()] = 0  # 将被 mask 的 patch 置为 0
+masked_patchified[0][mask[0].bool()] = 0  # 将被 mask 的 patch 置为 0
 
 # === 还原图像 ===
 original = crop * STD + MEAN
