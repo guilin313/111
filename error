@@ -1,6 +1,23 @@
 (pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/MAE3d$ python inference.py
 Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1670000
 yes
+Reconstruction loss: 0.4615
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference.py", line 58, in <module>
+    masked_volume = model.unpatchify(masked_patchified)[0, 0].cpu().numpy() * STD + MEAN
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/vitmae3d.py", line 1129, in unpatchify
+    patchified_pixel_values = torch.einsum("ndhwpqc->ncdhwpq", patchified_pixel_values)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/functional.py", line 402, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: einsum(): the number of subscripts in the equation (7) does not match the number of dimensions (8) for operand 0 and no ellipsis was given
+
+
+(pt12) guilin@guilin-System-Product-Name:~/PycharmProjects/MAE3d$ python inference.py
+Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d/checkpoint-1670000
+yes
 Reconstruction loss: 0.4652
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference.py", line 58, in <module>
