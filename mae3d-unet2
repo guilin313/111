@@ -30,8 +30,6 @@ class MAEUNet2Segmentation(nn.Module):
     def __init__(self, pretrained_path, config, num_classes=2):
         super().__init__()
         self.mae = ViTMAEForPreTraining.from_pretrained(pretrained_path, config=config)
-        self.encoder = self.mae.vit
-
         self.patch_size = config.patch_size
         self.hidden_dim = config.hidden_size
         self.decoder = MAEUNet2Decoder(encoder_dim=self.hidden_dim, num_classes=num_classes)
@@ -42,8 +40,8 @@ class MAEUNet2Segmentation(nn.Module):
         print(f"[DEBUG] Input shape: {x.shape}")
         print(f"[DEBUG] Config image_size: {self.config.image_size}, patch_size: {self.patch_size}")
 
-        # 强制关闭 MAE 的 mask_ratio 逻辑，返回所有 patch
-        features = self.encoder(pixel_values=x, mask_ratio=0.0).last_hidden_state  # [B, N+1, C]
+        # 使用 MAE 模型并关闭 mask_ratio
+        features = self.mae(pixel_values=x, mask_ratio=0.0).last_hidden_state  # [B, N+1, C]
         features = features[:, 1:, :]  # [B, N, C]
 
         N = features.shape[1]  # num_patches = D*H*W
@@ -54,18 +52,19 @@ class MAEUNet2Segmentation(nn.Module):
 
         print(f"[DEBUG] Patch grid D×H×W = {D}×{H}×{W} → expected patches: {D*H*W}, got: {N}")
 
-        if self.encoder.embeddings.position_embeddings.shape[1] != N + 1:
+        if self.mae.vit.embeddings.position_embeddings.shape[1] != N + 1:
             print("⚠️ Position embeddings mismatched — reinitializing...")
-            self.encoder.embeddings.position_embeddings = nn.Parameter(
+            self.mae.vit.embeddings.position_embeddings = nn.Parameter(
                 torch.zeros(1, N + 1, self.hidden_dim)
             )
-            nn.init.trunc_normal_(self.encoder.embeddings.position_embeddings, std=0.02)
+            nn.init.trunc_normal_(self.mae.vit.embeddings.position_embeddings, std=0.02)
 
         if D * H * W != N:
             raise ValueError(f"Mismatch: input patch count {N} does not match expected {D*H*W} from image_size {self.config.image_size} and patch_size {self.patch_size}")
 
         x = features.transpose(1, 2).reshape(B, self.hidden_dim, D, H, W)
         return self.decoder(x)
+
 
 
 # mae3d_unet_finetune.py
