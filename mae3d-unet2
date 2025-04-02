@@ -1,3 +1,45 @@
+# cremi_dataset.py
+import h5py
+import torch
+import numpy as np
+from torch.utils.data import Dataset
+
+class CREMIDataset(Dataset):
+    def __init__(self, h5_path, raw_key="volumes/raw", label_key="volumes/labels/neuron_ids", transform=None):
+        super().__init__()
+        self.h5_path = h5_path
+        self.raw_key = raw_key
+        self.label_key = label_key
+        self.transform = transform
+
+        with h5py.File(h5_path, "r") as f:
+            self.raw = f[raw_key][()]
+            self.label = f[label_key][()]
+
+        assert self.raw.shape == self.label.shape, "Raw and label volume must have same shape"
+        self.length = self.raw.shape[0]  # 默认按 Z 轴切片（或 patch）
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, idx):
+        image = self.raw[idx].astype(np.float32) / 255.0  # normalize
+        label = self.label[idx].astype(np.int64)
+
+        if self.transform:
+            image, label = self.transform(image, label)
+
+        image = torch.from_numpy(image).unsqueeze(0)  # [1, H, W]
+        label = torch.from_numpy(label)              # [H, W] → 可适配 3D later
+
+        return image, label
+
+
+
+
+
+
+
 # mae3d_unet_finetune.py
 import torch
 import torch.nn as nn
