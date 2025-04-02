@@ -1,0 +1,8 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference.py 
+Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d
+yes
+Reconstruction loss: 0.4290
+✅ Saved: results/reconstruction_triplet.png
+
+Process finished with exit code 0
+picture3
