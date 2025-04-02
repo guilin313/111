@@ -1,3 +1,74 @@
+# train_segmentation.py
+import os
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+from cremi_dataset import CREMIDataset
+from mae3d_unet_finetune import MAEUNet2Segmentation
+from transformers import ViTMAEConfig
+
+# === Config ===
+H5_PATHS = [
+    "./data/sample_A_20160501.hdf",
+    "./data/sample_B_20160501.hdf",
+    "./data/sample_C_20160501.hdf",
+]
+CHECKPOINT = "./output/vitmae3d/checkpoint-100000"
+BATCH_SIZE = 2
+NUM_EPOCHS = 50
+NUM_CLASSES = 2
+LR = 1e-4
+LOG_DIR = "./logs_seg"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# === Data ===
+datasets = [CREMIDataset(h5_path) for h5_path in H5_PATHS]
+dataset = ConcatDataset(datasets)
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+
+# === Model ===
+config = ViTMAEConfig.from_pretrained(CHECKPOINT)
+model = MAEUNet2Segmentation(CHECKPOINT, config, num_classes=NUM_CLASSES).to(DEVICE)
+
+# === Loss & Optimizer ===
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.AdamW(model.parameters(), lr=LR)
+
+# === Logging ===
+writer = SummaryWriter(LOG_DIR)
+
+# === Training Loop ===
+for epoch in range(NUM_EPOCHS):
+    model.train()
+    running_loss = 0.0
+    for i, (inputs, targets) in enumerate(tqdm(dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS}")):
+        inputs = inputs.to(DEVICE)
+        targets = targets.to(DEVICE)
+
+        optimizer.zero_grad()
+        outputs = model(inputs)  # [B, C, H, W]
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    avg_loss = running_loss / len(dataloader)
+    writer.add_scalar("Loss/train", avg_loss, epoch)
+    print(f"Epoch {epoch+1}, Loss: {avg_loss:.4f}")
+
+    # Optional: Save model
+    if (epoch + 1) % 10 == 0:
+        os.makedirs("./checkpoints", exist_ok=True)
+        torch.save(model.state_dict(), f"./checkpoints/mae3d_unet_epoch{epoch+1}.pth")
+
+writer.close()
+
+
+
 # cremi_dataset.py
 import h5py
 import torch
