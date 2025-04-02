@@ -1,3 +1,46 @@
+yes
+Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]crop shape: crop shape: (32, 320, 320)(32, 320, 320)
+
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+[DEBUG] Input shape: torch.Size([2, 1, 32, 320, 320])
+[DEBUG] Config image_size: [32, 320, 320], patch_size: [16, 16, 16]
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+[DEBUG] Patch grid D×H×W = 2×20×20 → expected patches: 800, got: 200
+⚠️ Position embeddings mismatched — reinitializing...
+Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 85, in <module>
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 64, in forward
+    raise ValueError(f"Mismatch: input patch count {N} does not match expected {D*H*W} from image_size {self.config.image_size} and patch_size {self.patch_size}")
+ValueError: Mismatch: input patch count 200 does not match expected 800 from image_size [32, 320, 320] and patch_size [16, 16, 16]
+
+Process finished with exit code 1
+
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py 
 yes
 Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]crop shape: (32, 320, 320)
