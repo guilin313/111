@@ -11,6 +11,26 @@ Traceback (most recent call last):
   File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 48, in forward
+    x = x.reshape(B, self.hidden_dim, *self.grid_size)  # [B, C, D, H, W]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: shape '[2, 768, 2, 20, 20]' is invalid for input of size 307200
+
+
+
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/train_segmentation.py 
+yes
+Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_segmentation.py", line 85, in <module>
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 45, in forward
     features = self.encoder(pixel_values=x).last_hidden_state  # [B, N+1, C]
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
