@@ -42,7 +42,8 @@ class MAEUNet2Segmentation(nn.Module):
         print(f"[DEBUG] Input shape: {x.shape}")
         print(f"[DEBUG] Config image_size: {self.config.image_size}, patch_size: {self.patch_size}")
 
-        features = self.encoder(pixel_values=x).last_hidden_state  # [B, N+1, C]
+        # 强制关闭 MAE 的 mask_ratio 逻辑，返回所有 patch
+        features = self.encoder(pixel_values=x, mask_ratio=0.0).last_hidden_state  # [B, N+1, C]
         features = features[:, 1:, :]  # [B, N, C]
 
         N = features.shape[1]  # num_patches = D*H*W
@@ -65,7 +66,6 @@ class MAEUNet2Segmentation(nn.Module):
 
         x = features.transpose(1, 2).reshape(B, self.hidden_dim, D, H, W)
         return self.decoder(x)
-
 
 
 # mae3d_unet_finetune.py
