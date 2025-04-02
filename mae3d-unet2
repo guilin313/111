@@ -1,0 +1,57 @@
+# mae3d_unet_finetune.py
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from vitmae3d import ViTMAEForPreTraining
+
+class MAEUNet2Decoder(nn.Module):
+    def __init__(self, encoder_dim, num_classes):
+        super().__init__()
+        self.up1 = nn.ConvTranspose3d(encoder_dim, 128, kernel_size=2, stride=2)
+        self.conv1 = nn.Sequential(
+            nn.Conv3d(128, 128, 3, padding=1), nn.ReLU(),
+            nn.Conv3d(128, 128, 3, padding=1), nn.ReLU()
+        )
+        self.up2 = nn.ConvTranspose3d(128, 64, kernel_size=2, stride=2)
+        self.conv2 = nn.Sequential(
+            nn.Conv3d(64, 64, 3, padding=1), nn.ReLU(),
+            nn.Conv3d(64, 64, 3, padding=1), nn.ReLU()
+        )
+        self.out = nn.Conv3d(64, num_classes, 1)
+
+    def forward(self, x):
+        x = self.up1(x)
+        x = self.conv1(x)
+        x = self.up2(x)
+        x = self.conv2(x)
+        return self.out(x)
+
+class MAEUNet2Segmentation(nn.Module):
+    def __init__(self, pretrained_path, config, num_classes=2):
+        super().__init__()
+        # 加载预训练 MAE 模型
+        self.mae = ViTMAEForPreTraining.from_pretrained(pretrained_path, config=config)
+        self.encoder = self.mae.vit  # encoder 输出 shape: [B, N, hidden_size]
+
+        self.patch_size = config.patch_size
+        self.grid_size = (
+            config.image_size[0] // self.patch_size[0],
+            config.image_size[1] // self.patch_size[1],
+            config.image_size[2] // self.patch_size[2]
+        )
+        self.hidden_dim = config.hidden_size
+
+        self.decoder = MAEUNet2Decoder(encoder_dim=self.hidden_dim, num_classes=num_classes)
+
+    def forward(self, x):  # x: [B, 1, D, H, W]
+        B = x.shape[0]
+        features = self.encoder(pixel_values=x).last_hidden_state  # [B, N+1, C]
+        features = features[:, 1:, :]  # 去掉 CLS token
+        x = features.transpose(1, 2)  # [B, C, N]
+        x = x.reshape(B, self.hidden_dim, *self.grid_size)  # [B, C, D, H, W]
+        return self.decoder(x)  # [B, num_classes, D', H', W']
+
+# 示例：初始化模型（需指定 config 和 checkpoint 路径）
+# from transformers import ViTMAEConfig
+# config = ViTMAEConfig.from_pretrained("./output/vitmae3d/checkpoint-100000")
+# model = MAEUNet2Segmentation("./output/vitmae3d/checkpoint-100000", config, num_classes=3)
