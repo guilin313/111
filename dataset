@@ -3,6 +3,68 @@ import h5py
 import torch
 import numpy as np
 from torch.utils.data import Dataset
+
+class CREMIAffinity3DDataset(Dataset):
+    def __init__(self, h5_path, raw_key="volumes/raw", label_key="volumes/labels/neuron_ids",
+                 patch_size=(32, 320, 320), mean=127.91 / 255, std=28 / 255):
+        super().__init__()
+        self.h5_path = h5_path
+        self.raw_key = raw_key
+        self.label_key = label_key
+        self.patch_size = patch_size
+        self.mean = mean
+        self.std = std
+
+        with h5py.File(h5_path, "r") as f:
+            self.raw = f[raw_key][()]
+            self.labels = f[label_key][()]
+
+        assert self.raw.shape == self.labels.shape, "Raw and label volume must have same shape"
+        self.volume_shape = self.raw.shape  # (D, H, W)
+        self.starts = self.compute_sliding_window_starts(self.volume_shape, self.patch_size)
+
+    def compute_sliding_window_starts(self, volume_shape, patch_size):
+        starts = []
+        for size, patch in zip(volume_shape, patch_size):
+            pos = list(range(0, size - patch + 1, patch))
+            if (size - patch) % patch != 0:
+                pos.append(size - patch)
+            starts.append(pos)
+        return [(z, y, x) for z in starts[0] for y in starts[1] for x in starts[2]]
+
+    def __len__(self):
+        return len(self.starts)
+
+    def compute_affinities(self, ids):
+        affinities = np.zeros((3, *ids.shape), dtype=np.uint8)
+        affinities[0, :-1] = (ids[1:] == ids[:-1])     # z+
+        affinities[1, :, :-1] = (ids[:, 1:] == ids[:, :-1])  # y+
+        affinities[2, :, :, :-1] = (ids[:, :, 1:] == ids[:, :, :-1])  # x+
+        return affinities
+
+    def __getitem__(self, idx):
+        z, y, x = self.starts[idx]
+        dz, dy, dx = self.patch_size
+
+        raw_crop = self.raw[z:z+dz, y:y+dy, x:x+dx].astype(np.float32)
+        label_crop = self.labels[z:z+dz, y:y+dy, x:x+dx].astype(np.int64)
+
+        raw_crop = (raw_crop / 255.0 - self.mean) / self.std
+        affinity = self.compute_affinities(label_crop)
+
+        raw_tensor = torch.from_numpy(raw_crop).unsqueeze(0)  # [1, D, H, W]
+        aff_tensor = torch.from_numpy(affinity.astype(np.float32))  # [3, D, H, W]
+        return raw_tensor, aff_tensor
+
+
+
+
+
+# cremi_affinity_3d_dataset.py
+import h5py
+import torch
+import numpy as np
+from torch.utils.data import Dataset
 import random
 
 class CREMIAffinity3DDataset(Dataset):
