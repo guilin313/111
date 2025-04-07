@@ -1,3 +1,64 @@
+import sys; print('Python %s on %s' % (sys.version, sys.platform))
+/home/guilin/miniconda3/envs/pt12/bin/python -X pycache_prefix=/home/guilin/.cache/JetBrains/PyCharmCE2024.3/cpython-cache /snap/pycharm-community/465/plugins/python-ce/helpers/pydev/pydevd.py --multiprocess --qt-support=auto --client 127.0.0.1 --port 32957 --file /home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py 
+Connected to pydev debugger (build 243.26053.29)
+yes
+Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+[DEBUG] Input shape: torch.Size([2, 1, 32, 320, 320])
+[DEBUG] Config image_size: (32, 320, 320), patch_size: [16, 16, 16]
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+crop shape: (32, 320, 320)
+[DEBUG] Patch grid D×H×W = 2×20×20 → expected patches: 800, got: 800
+Epoch 1/100 [Train]:   0%|          | 0/14500 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "/snap/pycharm-community/465/plugins/python-ce/helpers/pydev/pydevd.py", line 1570, in _exec
+    pydev_imports.execfile(file, globals, locals)  # execute the script
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/snap/pycharm-community/465/plugins/python-ce/helpers/pydev/_pydev_imps/_pydev_execfile.py", line 18, in execfile
+    exec(compile(contents+"\n", file, 'exec'), glob, loc)
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 88, in <module>
+    loss = criterion(outputs, targets)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 36, in forward
+    bce_loss = self.bce(input, target)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/loss.py", line 819, in forward
+    return F.binary_cross_entropy_with_logits(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/functional.py", line 3624, in binary_cross_entropy_with_logits
+    raise ValueError(
+ValueError: Target size (torch.Size([2, 3, 32, 320, 320])) must be the same as input size (torch.Size([2, 3, 8, 80, 80]))
+python-BaseException
+
+
+
+
 yes
 Epoch 1/100 [Train]:   0%|          | 0/14500 [00:00<?, ?it/s]crop shape: crop shape: (32, 320, 320)(32, 320, 320)
 
