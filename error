@@ -1,3 +1,5 @@
+tifffile.imwrite(f"debug_prob_z_aff_patch{i}.tif", pred[0].astype(np.float32))  # 不加阈值
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
 [Patch 0] pred max: 0.8588, mean: 0.7427, loss: 0.3448
