@@ -1,3 +1,9 @@
+self.mae = ViTMAEForPreTraining.from_pretrained(
+    pretrained_path,
+    config=config,
+    ignore_mismatched_sizes=True  # ← 自动忽略 shape 不一致的层
+)
+
 self.mae = ViTMAEForPreTraining(config)
 state_dict = torch.load(os.path.join(pretrained_path, "pytorch_model.bin"), map_location="cpu")
 # 删除 position embedding 相关的 keys（防止尺寸不匹配）
