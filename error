@@ -1,5 +1,20 @@
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
+[Patch 0] pred max: 0.8547, mean: 0.7405, loss: 0.3469
+[Patch 1] pred max: 0.8465, mean: 0.7675, loss: 0.2922
+[Patch 2] pred max: 0.8497, mean: 0.7591, loss: 0.3150
+[Patch 3] pred max: 0.8496, mean: 0.7603, loss: 0.3057
+[Patch 4] pred max: 0.8570, mean: 0.7489, loss: 0.3294
+[Patch 5] pred max: 0.8557, mean: 0.7507, loss: 0.3274
+✅ Saved 6 instance segmentations, raw patches, and GT patches to ./results_affinity3d
+✅ Average test loss: 0.3194
+
+Process finished with exit code 0
+
+
+
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
+yes
 [Patch 0] pred max: 0.8547, mean: 0.7404, loss: 0.3470
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 77, in <module>
