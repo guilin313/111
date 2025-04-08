@@ -1,3 +1,10 @@
+raw_np = raw[0, 0].numpy()
+raw_restore = (raw_np * STD + MEAN) * 255.0
+raw_uint8 = raw_restore.clip(0, 255).astype(np.uint8)
+
+tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw_uint8)
+
+
 tifffile.imwrite(f"debug_prob_z_aff_patch{i}.tif", pred[0].astype(np.float32))  # 不加阈值
 
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
