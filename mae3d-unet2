@@ -1,3 +1,13 @@
+self.mae = ViTMAEForPreTraining(config)
+state_dict = torch.load(os.path.join(pretrained_path, "pytorch_model.bin"), map_location="cpu")
+# 删除 position embedding 相关的 keys（防止尺寸不匹配）
+for k in list(state_dict.keys()):
+    if "position_embeddings" in k or "decoder_pos_embed" in k:
+        print(f"⚠️ Removing mismatched key: {k}")
+        del state_dict[k]
+_ = self.mae.load_state_dict(state_dict, strict=False)
+
+
 # === Logging Setup ===
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 logger = logging.getLogger(__name__)
