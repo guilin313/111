@@ -1,3 +1,136 @@
+
+import os
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, ConcatDataset, random_split
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+from cremi_dataset import CREMIAffinity3DDataset
+from mae3d_unet_finetune import MAEUNet2Segmentation
+from transformers import ViTMAEConfig
+
+# === Config ===
+H5_PATHS = [
+    "/home/guilin/PycharmProjects/MAE3d/segementation_data/sample_A_20160501.hdf",
+    "/home/guilin/PycharmProjects/MAE3d/segementation_data/sample_B_20160501.hdf",
+    "/home/guilin/PycharmProjects/MAE3d/segementation_data/sample_C_20160501.hdf",
+]
+CHECKPOINT = "/home/guilin/PycharmProjects/MAE3d/output/vitmae3d"
+CROP_SIZE = (32, 160, 160)
+BATCH_SIZE = 2
+NUM_EPOCHS = 300
+NUM_CLASSES = 3
+LR = 5e-4
+LOG_DIR = "./logs_affinity3d"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# === Focal Loss with no channel_weights (insert if needed) ===
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=2.0):
+        super().__init__()
+        self.gamma = gamma
+        self.bce = nn.BCEWithLogitsLoss(reduction='none')
+
+    def forward(self, input, target):
+        bce_loss = self.bce(input, target)
+        prob = torch.sigmoid(input)
+        focal_weight = (1 - prob) ** self.gamma * target + prob ** self.gamma * (1 - target)
+        return focal_weight * bce_loss
+
+# === Dataset ===
+dataset_a = CREMIAffinity3DDataset(H5_PATHS[0], crop_size=CROP_SIZE)
+dataset_b = CREMIAffinity3DDataset(H5_PATHS[1], crop_size=CROP_SIZE)
+dataset_c = CREMIAffinity3DDataset(H5_PATHS[2], crop_size=CROP_SIZE)
+
+val_ratio = 0.1
+val_size = int(len(dataset_c) * val_ratio)
+train_size = len(dataset_c) - val_size
+train_c, val_c = random_split(dataset_c, [train_size, val_size], generator=torch.Generator().manual_seed(42))
+
+train_dataset = ConcatDataset([dataset_a, dataset_b, train_c])
+val_dataset = val_c
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+
+# === Model ===
+config = ViTMAEConfig.from_pretrained(CHECKPOINT)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+model = MAEUNet2Segmentation(CHECKPOINT, config, num_classes=NUM_CLASSES).to(DEVICE)
+
+# === Optimizer, Scheduler, Loss ===
+optimizer = optim.AdamW(model.parameters(), lr=LR)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+criterion = FocalLoss(gamma=2.0)
+
+# === Logging ===
+writer = SummaryWriter(LOG_DIR)
+
+# === Accuracy Metric ===
+def affinity_accuracy(preds, targets):
+    preds = torch.sigmoid(preds) > 0.5
+    targets = targets > 0.5
+    correct = (preds == targets).float().mean()
+    return correct.item()
+
+# === Training Loop ===
+for epoch in range(NUM_EPOCHS):
+    model.train()
+    running_loss = 0.0
+    for inputs, targets, boundary in tqdm(train_loader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} [Train]"):
+        inputs = inputs.to(DEVICE)
+        targets = targets.to(DEVICE)
+        boundary = boundary.to(DEVICE)
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        weight = 1.0 + 4.0 * boundary.unsqueeze(1)
+        loss = criterion(outputs, targets) * weight
+        loss = loss.mean()
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    avg_train_loss = running_loss / len(train_loader)
+    writer.add_scalar("Loss/train", avg_train_loss, epoch)
+
+    # === Validation ===
+    model.eval()
+    val_loss = 0.0
+    val_acc = 0.0
+    with torch.no_grad():
+        for inputs, targets, boundary in tqdm(val_loader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} [Val]"):
+            inputs = inputs.to(DEVICE)
+            targets = targets.to(DEVICE)
+            boundary = boundary.to(DEVICE)
+
+            outputs = model(inputs)
+            weight = 1.0 + 4.0 * boundary.unsqueeze(1)
+            loss = criterion(outputs, targets) * weight
+            loss = loss.mean()
+            val_loss += loss.item()
+            val_acc += affinity_accuracy(outputs, targets)
+
+    avg_val_loss = val_loss / len(val_loader)
+    avg_val_acc = val_acc / len(val_loader)
+    writer.add_scalar("Loss/val", avg_val_loss, epoch)
+    writer.add_scalar("Metric/AffinityAcc", avg_val_acc, epoch)
+    writer.add_scalar("LR", scheduler.get_last_lr()[0], epoch)
+    print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, AffinityAcc: {avg_val_acc:.4f}")
+
+    scheduler.step()
+
+    if (epoch + 1) % 10 == 0:
+        os.makedirs("./checkpoints_affinity3d", exist_ok=True)
+        torch.save(model.state_dict(), f"./checkpoints_affinity3d/mae3d_unet_epoch{epoch+1}.pth")
+
+writer.close()
+
+
+
 # cremi_dataset.py
 import h5py
 import torch
