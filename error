@@ -1,3 +1,12 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/cremi_dataset.py 
+📊 正在统计 sample_C_20160501.hdf 中前 64 个 patch 的亲和图连接比例...
+➡️ 方向 z+: 连接比例 = 0.7977 (167292814/209715200)
+➡️ 方向 y+: 连接比例 = 0.9802 (205566076/209715200)
+➡️ 方向 x+: 连接比例 = 0.9820 (205949488/209715200)
+
+Process finished with exit code 0
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
 [Patch 0] pred max: 0.8565, mean: 0.7426, loss: 0.3449
