@@ -1,3 +1,33 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
+yes
+[Patch 0] pred max: 0.8751, mean: 0.7398, loss: 0.3473
+z_aff ratio: 0.0000
+y_aff ratio: 0.6068
+x_aff ratio: 0.9967
+[Patch 1] pred max: 0.8799, mean: 0.7769, loss: 0.2806
+z_aff ratio: 0.0000
+y_aff ratio: 0.9966
+x_aff ratio: 0.9969
+[Patch 2] pred max: 0.8686, mean: 0.7608, loss: 0.3129
+z_aff ratio: 0.0000
+y_aff ratio: 0.9967
+x_aff ratio: 0.9969
+[Patch 3] pred max: 0.8813, mean: 0.7688, loss: 0.2952
+z_aff ratio: 0.0000
+y_aff ratio: 0.9965
+x_aff ratio: 0.9969
+[Patch 4] pred max: 0.8723, mean: 0.7482, loss: 0.3293
+z_aff ratio: 0.0000
+y_aff ratio: 0.7090
+x_aff ratio: 0.9862
+[Patch 5] pred max: 0.8553, mean: 0.7539, loss: 0.3240
+z_aff ratio: 0.0000
+y_aff ratio: 0.9944
+x_aff ratio: 0.9969
+✅ Saved 6 instance segmentations, raw patches, and GT patches to ./results_affinity3d
+✅ Average test loss: 0.3149
+
+
 print(f"z_aff ratio: {z_aff.sum() / z_aff.size:.4f}")
 print(f"y_aff ratio: {y_aff.sum() / y_aff.size:.4f}")
 print(f"x_aff ratio: {x_aff.sum() / x_aff.size:.4f}")
