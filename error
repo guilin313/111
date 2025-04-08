@@ -1,29 +1,7 @@
-/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
-yes
-[Patch 0] pred max: 0.8574, mean: 0.7426, loss: 0.3449
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
-[Patch 1] pred max: 0.8574, mean: 0.7711, loss: 0.2876
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
-[Patch 2] pred max: 0.8537, mean: 0.7607, loss: 0.3135
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
-[Patch 3] pred max: 0.8536, mean: 0.7624, loss: 0.3038
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
-[Patch 4] pred max: 0.8592, mean: 0.7507, loss: 0.3274
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
-[Patch 5] pred max: 0.8576, mean: 0.7525, loss: 0.3254
-z_aff ratio: 0.0000
-y_aff ratio: 0.0000
-x_aff ratio: 0.0000
+raw_np = raw[0, 0].detach().cpu().numpy() if isinstance(raw, torch.Tensor) else raw[0, 0]
+
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 105, in <module>
     raw_np = raw_tensor.detach().cpu().numpy()  # 转成 numpy
