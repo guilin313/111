@@ -1,3 +1,97 @@
+import os
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import DataLoader, Subset
+from skimage.measure import label
+import h5py
+from cremi_dataset import CREMIAffinity3DDataset
+from mae3d_unet_finetune import MAEUNet2Segmentation
+from transformers import ViTMAEConfig
+import torch.nn as nn
+
+# === Config ===
+CHECKPOINT_PATH = "./checkpoints_affinity3d/mae3d_unet_epoch180.pth"
+CONFIG_PATH = "./output/vitmae3d"
+H5_PATH = "./segementation_data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_affinity3d"
+CROP_SIZE = (32, 160, 160)
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MEAN = 127.91 / 255
+STD = 28 / 255
+THRESHOLD = 0.7  # 可调整
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# === Load ground truth neuron_ids volume ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === Dataset: 使用 sample C 的后 10% patch 作为测试集 ===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === Load model and weights ===
+config = ViTMAEConfig.from_pretrained(CONFIG_PATH)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+model = MAEUNet2Segmentation(CONFIG_PATH, config, num_classes=3).to(DEVICE)
+model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+model.eval()
+
+criterion = nn.BCEWithLogitsLoss()
+
+restored_instances = []
+all_loss = []
+
+with torch.no_grad():
+    for i, (raw, target_aff, boundary) in enumerate(test_loader):
+        # === 恢复原图像（反标准化） ===
+        raw_tensor = raw[0, 0]
+        raw_np = raw_tensor.detach().cpu().numpy() if isinstance(raw_tensor, torch.Tensor) else raw_tensor
+        raw_restore = (raw_np * STD + MEAN) * 255.0
+        raw_uint8 = raw_restore.clip(0, 255).astype(np.uint8)
+
+        # === 提取对应 GT 标签区域 ===
+        z, y, x = full_dataset.starts[test_indices[i]]
+        dz, dy, dx = CROP_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+
+        raw = raw.to(DEVICE)
+        target_aff = target_aff.to(DEVICE)
+
+        # === 推理 & loss ===
+        output = model(raw)
+        loss = criterion(output, target_aff)
+        all_loss.append(loss.item())
+
+        pred = torch.sigmoid(output)[0].cpu().numpy()
+        z_aff = (pred[0] > THRESHOLD)
+        y_aff = (pred[1] > THRESHOLD)
+        x_aff = (pred[2] > THRESHOLD)
+
+        # === 保存调试图 ===
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"debug_prob_z_aff_patch{i}.tif"), pred[0].astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"debug_z_aff_patch{i}.tif"), z_aff.astype(np.uint8))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw_uint8)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+        # === 仅基于 z+ affinity 做实例分割 ===
+        conn = np.zeros_like(z_aff, dtype=bool)
+        conn[:-1] |= z_aff[:-1]
+        instance = label(conn, connectivity=1).astype(np.uint16)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+        restored_instances.append(instance)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations and results to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
 
 import os
 import torch
