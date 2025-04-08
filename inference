@@ -1,3 +1,116 @@
+# inference_affinity_3d.py
+import os
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import DataLoader
+from skimage.measure import label
+import h5py
+from cremi_affinity_3d_dataset import CREMIAffinity3DDataset
+from mae3d_unet_finetune import MAEUNet2Segmentation
+from transformers import ViTMAEConfig
+
+# === Config ===
+CHECKPOINT_PATH = "./checkpoints_affinity3d/mae3d_unet_epoch100.pth"
+CONFIG_PATH = "./output/vitmae3d/checkpoint-100000"
+H5_PATH = "./data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_affinity3d"
+PATCH_SIZE = (32, 320, 320)
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# === Load full labels for ground truth neuron_ids ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === Dataset (10% C as test set) ===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, patch_size=PATCH_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = torch.utils.data.Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === Load model ===
+config = ViTMAEConfig.from_pretrained(CONFIG_PATH)
+config.image_size = PATCH_SIZE
+config.mask_ratio = 0.0
+model = MAEUNet2Segmentation(CONFIG_PATH, config, num_classes=3).to(DEVICE)
+model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+model.eval()
+
+# === Inference & reconstruction ===
+restored_raws = []
+restored_instances = []
+gt_labels = []
+
+with torch.no_grad():
+    for i, (raw, _) in enumerate(test_loader):
+        raw_np = raw[0, 0].numpy()
+        restored_raws.append(raw_np)
+
+        # Save corresponding GT label patch
+        z, y, x = full_dataset.starts[test_indices[i]]
+        dz, dy, dx = PATCH_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+        gt_labels.append(gt)
+
+        raw = raw.to(DEVICE)
+        pred = torch.sigmoid(model(raw))[0].cpu().numpy()  # [3, D, H, W]
+
+        # === Post-process to instance segmentation ===
+        z_aff = (pred[0] > 0.5).astype(np.uint8)
+        y_aff = (pred[1] > 0.5).astype(np.uint8)
+        x_aff = (pred[2] > 0.5).astype(np.uint8)
+
+        D, H, W = z_aff.shape
+        visited = np.zeros((D, H, W), dtype=bool)
+        labels = np.zeros((D, H, W), dtype=np.int32)
+        current_id = 1
+
+        def dfs(z, y, x):
+            stack = [(z, y, x)]
+            while stack:
+                cz, cy, cx = stack.pop()
+                if not (0 <= cz < D and 0 <= cy < H and 0 <= cx < W):
+                    continue
+                if visited[cz, cy, cx]:
+                    continue
+                visited[cz, cy, cx] = True
+                labels[cz, cy, cx] = current_id
+
+                if cz < D-1 and z_aff[cz, cy, cx]:
+                    stack.append((cz+1, cy, cx))
+                if cy < H-1 and y_aff[cz, cy, cx]:
+                    stack.append((cz, cy+1, cx))
+                if cx < W-1 and x_aff[cz, cy, cx]:
+                    stack.append((cz, cy, cx+1))
+
+        for z in range(D):
+            for y in range(H):
+                for x in range(W):
+                    if not visited[z, y, x]:
+                        dfs(z, y, x)
+                        current_id += 1
+
+        restored_instances.append(labels.astype(np.uint16))
+
+# === Save outputs ===
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+for i, raw in enumerate(restored_raws):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw.astype(np.float32))
+
+for i, inst in enumerate(restored_instances):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), inst)
+
+for i, gt in enumerate(gt_labels):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations, raw patches, and GT patches to {SAVE_DIR}")
+
+
+
 # inference_mae3d.py
 import os
 import torch
