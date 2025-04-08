@@ -11,6 +11,121 @@ from transformers import ViTMAEConfig
 import torch.nn as nn
 
 # === Config ===
+CHECKPOINT_PATH = "./checkpoints_affinity3d1/mae3d_unet_epoch70.pth"
+CONFIG_PATH = "./output/vitmae3d"
+H5_PATH = "./segementation_data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_affinity3d"
+CROP_SIZE = (32, 320, 320)
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MEAN = 127.91 / 255
+STD = 28 / 255
+THRESHOLD = 0.7
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# === Load full ground truth neuron_ids ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === Dataset (10% C as test set) ===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === Load model ===
+config = ViTMAEConfig.from_pretrained(CONFIG_PATH)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+model = MAEUNet2Segmentation(CONFIG_PATH, config, num_classes=3).to(DEVICE)
+model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=True))
+model.eval()
+
+criterion = nn.BCEWithLogitsLoss()
+
+# === Inference ===
+restored_raws = []
+restored_instances = []
+gt_labels = []
+all_loss = []
+
+with torch.no_grad():
+    for i, (raw, target_aff) in enumerate(test_loader):
+        raw_np = raw[0, 0].numpy()
+        raw_uint8 = ((raw_np * STD +MEAN) * 255).clip(0, 255).astype(np.uint8)
+        restored_raws.append(raw_uint8)
+
+        z, y, x = full_dataset.starts[test_indices[i]]
+        dz, dy, dx = CROP_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+        gt_labels.append(gt)
+
+        raw = raw.to(DEVICE)
+        target_aff = target_aff.to(DEVICE)
+
+        output = model(raw)
+        loss = criterion(output, target_aff)
+        all_loss.append(loss.item())
+
+
+        pred = torch.sigmoid(output)[0].cpu().numpy()  # [3, D, H, W]
+        tifffile.imwrite(os.path.join(SAVE_DIR,f"debug_prob_z_aff_patch{i}.tif"), pred[0].astype(np.float32))  # 不加阈值
+
+        print(f"[Patch {i}] pred max: {pred.max():.4f}, mean: {pred.mean():.4f}, loss: {loss.item():.4f}")
+
+
+        z_aff = (pred[0] > THRESHOLD)
+        y_aff = (pred[1] > THRESHOLD)
+        x_aff = (pred[2] > THRESHOLD)
+
+        print(f"z_aff ratio: {z_aff.sum() / z_aff.size:.4f}")
+        print(f"y_aff ratio: {y_aff.sum() / y_aff.size:.4f}")
+        print(f"x_aff ratio: {x_aff.sum() / x_aff.size:.4f}")
+
+
+        # Save z_aff debug as uint8 for visualization
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"debug_z_aff_patch{i}.tif"), z_aff.astype(np.uint8))
+
+        # === Connected component labeling ===
+        aff_mask = np.zeros_like(z_aff, dtype=bool)
+        aff_mask[:-1] &= z_aff[:-1]
+        aff_mask[:, :-1] &= y_aff[:, :-1]
+        aff_mask[:, :, :-1] &= x_aff[:, :, :-1]
+
+        instance = label(aff_mask, connectivity=1).astype(np.uint16)
+        restored_instances.append(instance)
+
+# === Save results ===
+for i, raw in enumerate(restored_raws):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw)
+
+for i, inst in enumerate(restored_instances):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), inst)
+
+for i, gt in enumerate(gt_labels):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations, raw patches, and GT patches to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
+
+import os
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import DataLoader, Subset
+from skimage.measure import label
+import h5py
+from cremi_dataset import CREMIAffinity3DDataset
+from mae3d_unet_finetune import MAEUNet2Segmentation
+from transformers import ViTMAEConfig
+import torch.nn as nn
+
+# === Config ===
 CHECKPOINT_PATH = "./checkpoints_affinity3d/mae3d_unet_epoch180.pth"
 CONFIG_PATH = "./output/vitmae3d"
 H5_PATH = "./segementation_data/sample_C_20160501.hdf"
