@@ -1,3 +1,12 @@
+# === 还原图像（反标准化）
+raw_tensor = raw[0, 0]  # Tensor 类型 [1, D, H, W]
+raw_np = raw_tensor.detach().cpu().numpy()  # 转成 numpy
+raw_restore = (raw_np * STD + MEAN) * 255.0
+raw_uint8 = raw_restore.clip(0, 255).astype(np.uint8)
+
+tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw_uint8)
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 103, in <module>
     raw_np = raw[0, 0].numpy()
