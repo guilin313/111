@@ -1,3 +1,10 @@
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 103, in <module>
+    raw_np = raw[0, 0].numpy()
+             ^^^^^^^^^^^^^^^
+AttributeError: 'numpy.ndarray' object has no attribute 'numpy'. Did you mean: 'dump'?
+
+
 raw_np = raw[0, 0].numpy()
 raw_restore = (raw_np * STD + MEAN) * 255.0
 raw_uint8 = raw_restore.clip(0, 255).astype(np.uint8)
