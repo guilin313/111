@@ -1,5 +1,21 @@
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
+/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py:42: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+z_aff ratio: 0.9687
+y_aff ratio: 0.9969
+x_aff ratio: 0.9969
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 86, in <module>
+    aff_mask[:-1] &= z_aff[:-1]      # z+
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+numpy.core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'bitwise_and' output from dtype('uint8') to dtype('bool') with casting rule 'same_kind'
+
+Process finished with exit code 1
+
+
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
+yes
 [Patch 0] pred max: 0.8751, mean: 0.7398, loss: 0.3473
 z_aff ratio: 0.0000
 y_aff ratio: 0.6068
