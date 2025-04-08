@@ -1,3 +1,108 @@
+[Patch 0] pred max: 0.8334, mean: 0.7179, loss: 0.3466
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 1] pred max: 0.8334, mean: 0.7179, loss: 0.3445
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 2] pred max: 0.8334, mean: 0.7179, loss: 0.3521
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 3] pred max: 0.8334, mean: 0.7179, loss: 0.3565
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 4] pred max: 0.8334, mean: 0.7179, loss: 0.3605
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 5] pred max: 0.8334, mean: 0.7179, loss: 0.3745
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 6] pred max: 0.8334, mean: 0.7179, loss: 0.3657
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 7] pred max: 0.8334, mean: 0.7179, loss: 0.3394
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 8] pred max: 0.8334, mean: 0.7179, loss: 0.3258
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 9] pred max: 0.8334, mean: 0.7179, loss: 0.3635
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 10] pred max: 0.8334, mean: 0.7179, loss: 0.3663
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 11] pred max: 0.8334, mean: 0.7179, loss: 0.3601
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 12] pred max: 0.8334, mean: 0.7179, loss: 0.3598
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 13] pred max: 0.8334, mean: 0.7179, loss: 0.3698
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 14] pred max: 0.8334, mean: 0.7179, loss: 0.3592
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 15] pred max: 0.8334, mean: 0.7179, loss: 0.3690
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 16] pred max: 0.8334, mean: 0.7179, loss: 0.3647
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 17] pred max: 0.8334, mean: 0.7179, loss: 0.3643
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 18] pred max: 0.8334, mean: 0.7179, loss: 0.3417
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 19] pred max: 0.8334, mean: 0.7179, loss: 0.3303
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 20] pred max: 0.8334, mean: 0.7179, loss: 0.3556
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 21] pred max: 0.8334, mean: 0.7179, loss: 0.3673
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 22] pred max: 0.8334, mean: 0.7179, loss: 0.3564
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 23] pred max: 0.8334, mean: 0.7179, loss: 0.3673
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+[Patch 24] pred max: 0.8334, mean: 0.7179, loss: 0.3614
+z_aff ratio: 0.0000
+y_aff ratio: 0.9938
+x_aff ratio: 0.9938
+✅ Saved 25 instance segmentations, raw patches, and GT patches to ./results_affinity3d1
+✅ Average test loss: 0.3569
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py 
 yes
 Some weights of ViTMAEForPreTraining were not initialized from the model checkpoint at /home/guilin/PycharmProjects/MAE3d/output/vitmae3d and are newly initialized because the shapes did not match:
