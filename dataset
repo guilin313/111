@@ -1,6 +1,45 @@
 if __name__ == "__main__":
     import numpy as np
 
+    H5_PATH = "./segementation_data/sample_C_20160501.hdf"  # ← 修改为你的实际路径
+
+    # 多种 patch size 配置
+    PATCH_SIZES = [
+        (32, 320, 320),
+        (32, 160, 160),
+        (32, 96, 96),
+        (32, 64, 64),
+        (64, 160, 160)
+    ]
+
+    max_patches = 50  # 每种 patch size 只统计前 N 个 patch
+
+    print(f"📊 比较多种 patch size 下的亲和图连接比例 (sample_C_20160501.hdf, 每种前 {max_patches} 个 patch)...\n")
+
+    for patch_size in PATCH_SIZES:
+        dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=patch_size)
+
+        total_voxels = np.zeros(3, dtype=np.int64)
+        total_ones = np.zeros(3, dtype=np.int64)
+
+        N = min(max_patches, len(dataset))
+        for i in range(N):
+            _, aff = dataset[i]
+            aff_np = aff.numpy()
+            total_voxels += aff_np.shape[1] * aff_np.shape[2] * aff_np.shape[3]
+            total_ones += aff_np.sum(axis=(1, 2, 3)).astype(np.int64)
+
+        print(f"🧩 Patch size: {patch_size}")
+        directions = ['z+', 'y+', 'x+']
+        for i in range(3):
+            ratio = total_ones[i] / total_voxels[i]
+            print(f"  ➜ 方向 {directions[i]}: 连接比例 = {ratio:.4f} ({total_ones[i]}/{total_voxels[i]})")
+        print("-" * 60)
+
+
+if __name__ == "__main__":
+    import numpy as np
+
     H5_PATH = "./segementation_data/sample_C_20160501.hdf"  # ← 请根据你实际路径调整
     CROP_SIZE = (32, 320, 320)
 
