@@ -1,3 +1,30 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py 
+yes
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 60, in <module>
+    model = MAEUNet2Segmentation(CHECKPOINT, config, num_classes=NUM_CLASSES).to(DEVICE)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 48, in __init__
+    self.mae = ViTMAEForPreTraining.from_pretrained(pretrained_path, config=config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/modeling_utils.py", line 272, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/modeling_utils.py", line 4480, in from_pretrained
+    ) = cls._load_pretrained_model(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/transformers/modeling_utils.py", line 4930, in _load_pretrained_model
+    model_to_load.load_state_dict(state_dict, strict=False, assign=assign_params)
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 2584, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for ViTMAEForPreTraining:
+	size mismatch for vit.embeddings.position_embeddings: copying a param with shape torch.Size([1, 801, 768]) from checkpoint, the shape in current model is torch.Size([1, 201, 768]).
+	size mismatch for decoder.decoder_pos_embed: copying a param with shape torch.Size([1, 801, 384]) from checkpoint, the shape in current model is torch.Size([1, 201, 384]).
+
+Process finished with exit code 1
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/cremi_dataset.py 
 📊 比较多种 patch size 下的亲和图连接比例 (sample_C_20160501.hdf, 每种前 50 个 patch)...
 
