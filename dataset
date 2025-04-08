@@ -1,3 +1,30 @@
+if __name__ == "__main__":
+    import numpy as np
+
+    H5_PATH = "./segementation_data/sample_C_20160501.hdf"  # ← 请根据你实际路径调整
+    CROP_SIZE = (32, 320, 320)
+
+    dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+
+    total_voxels = np.zeros(3, dtype=np.int64)
+    total_ones = np.zeros(3, dtype=np.int64)
+
+    N = min(100, len(dataset))  # 检查前100个patch足够代表性
+    print(f"📊 正在统计 sample_C_20160501.hdf 中前 {N} 个 patch 的亲和图连接比例...")
+
+    for i in range(N):
+        _, aff = dataset[i]  # aff: [3, D, H, W]
+        aff_np = aff.numpy()
+        total_voxels += aff_np.shape[1] * aff_np.shape[2] * aff_np.shape[3]
+        total_ones += aff_np.sum(axis=(1, 2, 3)).astype(np.int64)
+
+    directions = ['z+', 'y+', 'x+']
+    for i in range(3):
+        ratio = total_ones[i] / total_voxels[i]
+        print(f"➡️ 方向 {directions[i]}: 连接比例 = {ratio:.4f} ({total_ones[i]}/{total_voxels[i]})")
+
+
+
 # cremi_affinity_3d_dataset.py
 import h5py
 import torch
