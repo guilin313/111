@@ -1,3 +1,9 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
+yes
+/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py:39: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+
+
 import sys; print('Python %s on %s' % (sys.version, sys.platform))
 /home/guilin/miniconda3/envs/pt12/bin/python -X pycache_prefix=/home/guilin/.cache/JetBrains/PyCharmCE2024.3/cpython-cache /snap/pycharm-community/465/plugins/python-ce/helpers/pydev/pydevd.py --multiprocess --qt-support=auto --client 127.0.0.1 --port 32957 --file /home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py 
 Connected to pydev debugger (build 243.26053.29)
