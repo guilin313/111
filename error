@@ -1,3 +1,24 @@
+Some weights of ViTMAEForPreTraining were not initialized from the model checkpoint at /home/guilin/PycharmProjects/MAE3d/output/vitmae3d and are newly initialized because the shapes did not match:
+- decoder.decoder_pos_embed: found shape torch.Size([1, 801, 384]) in the checkpoint and torch.Size([1, 201, 384]) in the model instantiated
+- vit.embeddings.position_embeddings: found shape torch.Size([1, 801, 768]) in the checkpoint and torch.Size([1, 201, 768]) in the model instantiated
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Epoch 1/300 [Train]:   0%|          | 0/372 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 101, in <module>
+    loss = criterion(outputs, targets) * weight
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 46, in forward
+    return (focal_loss * self.channel_weights).mean()
+            ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+
+
 [Patch 0] pred max: 0.8334, mean: 0.7179, loss: 0.3466
 z_aff ratio: 0.9688
 y_aff ratio: 0.9938
