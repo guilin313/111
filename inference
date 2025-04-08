@@ -1,3 +1,9 @@
+conn = np.ones_like(z_aff, dtype=bool)
+conn[:-1] &= z_aff[:-1] & z_aff[1:]
+conn[:, :-1] &= y_aff[:, :-1] & y_aff[:, 1:]
+conn[:, :, :-1] &= x_aff[:, :, :-1] & x_aff[:, :, 1:]
+
+
 import os
 import torch
 import tifffile
