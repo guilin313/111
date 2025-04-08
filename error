@@ -1,3 +1,8 @@
+print(f"z_aff ratio: {z_aff.sum() / z_aff.size:.4f}")
+print(f"y_aff ratio: {y_aff.sum() / y_aff.size:.4f}")
+print(f"x_aff ratio: {x_aff.sum() / x_aff.size:.4f}")
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
 [Patch 0] pred max: 0.8547, mean: 0.7405, loss: 0.3469
