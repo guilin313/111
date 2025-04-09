@@ -1,4 +1,99 @@
-        x_embed = self.encoder.embeddings(x)
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from vitmae3d import ViTMAEForPreTraining
+
+class ResidualBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv3d(channels, channels, 3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(channels, channels, 3, padding=1),
+        )
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        return self.relu(x + self.block(x))
+
+class UNETRDecoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.up = nn.ConvTranspose3d(in_channels, out_channels, 2, stride=2)
+        self.resblock = ResidualBlock(out_channels)
+
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            x = x + skip
+        return self.resblock(x)
+
+class MAEUNETRDecoder(nn.Module):
+    def __init__(self, hidden_size, feature_size, out_channels):
+        super().__init__()
+        self.dec4 = UNETRDecoderBlock(hidden_size, feature_size * 8)
+        self.dec3 = UNETRDecoderBlock(feature_size * 8, feature_size * 4)
+        self.dec2 = UNETRDecoderBlock(feature_size * 4, feature_size * 2)
+        self.dec1 = UNETRDecoderBlock(feature_size * 2, feature_size)
+        self.out = nn.Conv3d(feature_size, out_channels, kernel_size=1)
+
+    def forward(self, x, skips):  # skips: [skip1, skip2, skip3, skip4]
+        x = self.dec4(x, skips[3])  # skip from Block 8
+        x = self.dec3(x, skips[2])  # skip from Block 6
+        x = self.dec2(x, skips[1])  # skip from Block 4
+        x = self.dec1(x, skips[0])  # skip from Block 2
+        return self.out(x)
+
+class MAEUNETRSegmentation(nn.Module):
+    def __init__(self, pretrained_path, config, num_classes=3, feature_size=32):
+        super().__init__()
+        self.config = config
+        self.patch_size = config.patch_size
+        self.hidden_size = config.hidden_size
+
+        self.mae = ViTMAEForPreTraining.from_pretrained(
+            pretrained_path, config=config, ignore_mismatched_sizes=True
+        )
+        self.encoder = self.mae.vit
+
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+        self.feature_size = feature_size
+        self.decoder = MAEUNETRDecoder(
+            hidden_size=self.hidden_size,
+            feature_size=feature_size,
+            out_channels=num_classes
+        )
+
+    def proj_feat(self, x, grid_size):
+        B = x.shape[0]
+        x = x.view(B, *grid_size, self.hidden_size)
+        x = x.permute(0, 4, 1, 2, 3).contiguous()
+        return x
+
+    def forward(self, x):
+        B = x.shape[0]
+        Pd, Ph, Pw = self.config.patch_size
+        D = self.config.image_size[0] // Pd
+        H = self.config.image_size[1] // Ph
+        W = self.config.image_size[2] // Pw
+        grid_size = (D, H, W)
+
+        out = self.encoder(pixel_values=x, output_hidden_states=True, return_dict=True)
+
+        # Extract 4 skip layers and main path
+        skip1 = self.proj_feat(out.hidden_states[2][:, 1:, :], grid_size)  # Block 2
+        skip2 = self.proj_feat(out.hidden_states[4][:, 1:, :], grid_size)  # Block 4
+        skip3 = self.proj_feat(out.hidden_states[6][:, 1:, :], grid_size)  # Block 6
+        skip4 = self.proj_feat(out.hidden_states[8][:, 1:, :], grid_size)  # Block 8
+        return self.decoder(skip4, [skip1, skip2, skip3, skip4])
+
+
+
+
+x_embed = self.encoder.embeddings(x)
         if isinstance(x_embed, tuple):
             #print("x_embed = self.encoder.embeddings(x)为tuple，转为tensor")
             x_embed = x_embed[0]
