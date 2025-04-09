@@ -1,3 +1,33 @@
+Epoch 1/300 [Train]:   0%|          | 0/93 [00:00<?, ?it/s]Total params: 108903715, Trainable: 33953443
+Epoch 1/300 [Train]:   0%|          | 0/93 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 104, in <module>
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 104, in forward
+    return self.decoder(main, [skip1, skip2, skip3, skip4])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 38, in forward
+    x = torch.cat([x, skips[3]], dim=1)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Sizes of tensors must match except in dimension 1. Expected size 4 but got size 2 for tensor number 1 in the list.
+
+Process finished with exit code 1
+
+
+
 x = self.up1(x)
 x = torch.cat([x, F.interpolate(skips[0], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
 x = self.conv1(x)
