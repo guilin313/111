@@ -1,3 +1,45 @@
+if __name__ == "__main__":
+    import os
+    import tifffile
+
+    # === 配置 ===
+    H5_PATH = "./segementation_data/sample_C_20160501.hdf"  # 修改为你的路径
+    OUTPUT_DIR = "./affinity_debug_output"
+    CROP_SIZE = (32, 160, 160)
+    SAVE_NUM = 10  # 保存前几个 patch 的亲和图
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+
+    print(f"📊 正在保存前 {SAVE_NUM} 个 patch 的原图、标签和亲和图...")
+
+    for i in range(min(SAVE_NUM, len(dataset))):
+        raw, aff, _ = dataset[i]  # raw: [1, D, H, W], aff: [3, D, H, W]
+        z, y, x = dataset.starts[i]
+        dz, dy, dx = CROP_SIZE
+
+        # 还原原图（反标准化）
+        raw_np = raw.squeeze(0).numpy()
+        raw_restore = ((raw_np * dataset.std + dataset.mean) * 255).clip(0, 255).astype(np.uint8)
+
+        # 标签
+        label_np = dataset.labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+
+        # 亲和图 [3, D, H, W] → 每个方向单独保存
+        aff_np = (aff.numpy() * 255).astype(np.uint8)
+
+        tifffile.imwrite(os.path.join(OUTPUT_DIR, f"raw_patch{i}.tif"), raw_restore)
+        tifffile.imwrite(os.path.join(OUTPUT_DIR, f"label_patch{i}.tif"), label_np)
+        tifffile.imwrite(os.path.join(OUTPUT_DIR, f"affinity_z_patch{i}.tif"), aff_np[0])
+        tifffile.imwrite(os.path.join(OUTPUT_DIR, f"affinity_y_patch{i}.tif"), aff_np[1])
+        tifffile.imwrite(os.path.join(OUTPUT_DIR, f"affinity_x_patch{i}.tif"), aff_np[2])
+
+        print(f"✅ patch {i} 保存完成：raw + label + z/y/x affinity")
+
+    print("🎉 所有 patch 保存完成！文件保存在：", OUTPUT_DIR)
+
+
+
 import h5py
 import torch
 import numpy as np
