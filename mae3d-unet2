@@ -1,3 +1,24 @@
+        x_embed = self.encoder.embeddings(x)
+        if isinstance(x_embed, tuple):
+            #print("x_embed = self.encoder.embeddings(x)为tuple，转为tensor")
+            x_embed = x_embed[0]
+        if hasattr(x_embed, "last_hidden_state"):
+            x_embed = x_embed.last_hidden_state
+
+        hidden_states = []
+        for i, blk in enumerate(self.encoder.encoder.layer):
+            x_embed = blk(x_embed)
+
+            # ✅ 兼容各种返回格式：tuple / BaseModelOutput / tensor
+            if isinstance(x_embed, tuple):
+                #print("x_embed = blk(x_embed)为tuple，转为tensor")
+                x_embed = x_embed[0]
+            if hasattr(x_embed, "last_hidden_state"):
+                x_embed = x_embed.last_hidden_state
+
+            if i in [3, 6, 9]:
+                hidden_states.append(x_embed)
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
