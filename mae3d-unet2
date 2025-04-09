@@ -1,3 +1,112 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from vitmae3d import ViTMAEForPreTraining
+
+class ResidualBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv3d(channels, channels, 3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(channels, channels, 3, padding=1),
+        )
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        return self.relu(x + self.block(x))
+
+class UNet2Decoder(nn.Module):
+    def __init__(self, encoder_dim, skip_dims, num_classes):
+        super().__init__()
+        self.up1 = nn.ConvTranspose3d(encoder_dim, 256, 2, stride=2)
+        self.conv1 = ResidualBlock(256 + skip_dims[3])
+
+        self.up2 = nn.ConvTranspose3d(256 + skip_dims[3], 128, 2, stride=2)
+        self.conv2 = ResidualBlock(128 + skip_dims[2])
+
+        self.up3 = nn.ConvTranspose3d(128 + skip_dims[2], 64, 2, stride=2)
+        self.conv3 = ResidualBlock(64 + skip_dims[1])
+
+        self.up4 = nn.ConvTranspose3d(64 + skip_dims[1], 32, 2, stride=2)
+        self.conv4 = ResidualBlock(32 + skip_dims[0])
+
+        self.out = nn.Conv3d(64, num_classes, kernel_size=1)
+
+    def forward(self, x, skips):
+        x = self.up1(x)
+        x = torch.cat([x, F.interpolate(skips[3], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+        x = self.conv1(x)
+
+        x = self.up2(x)
+        x = torch.cat([x, F.interpolate(skips[2], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+        x = self.conv2(x)
+
+        x = self.up3(x)
+        x = torch.cat([x, F.interpolate(skips[1], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+        x = self.conv3(x)
+
+        x = self.up4(x)
+        x = torch.cat([x, F.interpolate(skips[0], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+        x = self.conv4(x)
+
+        return self.out(x)
+
+
+class MAEUNet2SkipSegmentation(nn.Module):
+    def __init__(self, pretrained_path, config, num_classes=3):
+        super().__init__()
+        self.config = config
+        self.patch_size = tuple(config.patch_size)
+        self.hidden_size = config.hidden_size
+
+        self.mae = ViTMAEForPreTraining.from_pretrained(
+            pretrained_path, config=config, ignore_mismatched_sizes=True
+        )
+        self.encoder = self.mae.vit
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+        self.proj2 = nn.Conv3d(self.hidden_size, 32, 1)
+        self.proj4 = nn.Conv3d(self.hidden_size, 64, 1)
+        self.proj6 = nn.Conv3d(self.hidden_size, 128, 1)
+        self.proj8 = nn.Conv3d(self.hidden_size, 256, 1)
+
+        self.decoder = UNet2Decoder(encoder_dim=self.hidden_size, skip_dims=[32, 64, 128, 256], num_classes=num_classes)
+
+    def proj_feat(self, x, grid_size):
+        B = x.shape[0]
+        if x.shape[1] == grid_size[0] * grid_size[1] * grid_size[2] + 1:
+            x = x[:, 1:, :]
+        x = x.view(B, *grid_size, self.hidden_size)
+        return x.permute(0, 4, 1, 2, 3).contiguous()
+
+    def forward(self, x):
+        B = x.shape[0]
+        Pd, Ph, Pw = self.patch_size
+        D = self.config.image_size[0] // Pd
+        H = self.config.image_size[1] // Ph
+        W = self.config.image_size[2] // Pw
+        grid_size = (D, H, W)
+
+        out = self.encoder(pixel_values=x, output_hidden_states=True, return_dict=True)
+        main = self.proj_feat(out.hidden_states[9], grid_size)
+
+        skip1 = self.proj_feat(out.hidden_states[2], grid_size)  # Block 2
+        skip2 = self.proj_feat(out.hidden_states[4], grid_size)  # Block 4
+        skip3 = self.proj_feat(out.hidden_states[6], grid_size)  # Block 6
+        skip4 = self.proj_feat(out.hidden_states[8], grid_size)  # Block 8
+
+        skip1 = self.proj2(skip1)
+        skip2 = self.proj4(skip2)
+        skip3 = self.proj6(skip3)
+        skip4 = self.proj8(skip4)
+
+        return self.decoder(main, [skip1, skip2, skip3, skip4])
+
+
+
+
 def forward(self, x, skips):
     x = self.up1(x)
     x = torch.cat([x, F.interpolate(skips[3], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
