@@ -1,3 +1,16 @@
+x = self.up1(x)
+x = torch.cat([x, F.interpolate(skips[0], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+x = self.conv1(x)
+
+x = self.up2(x)
+x = torch.cat([x, F.interpolate(skips[1], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+x = self.conv2(x)
+
+x = self.up3(x)
+x = torch.cat([x, F.interpolate(skips[2], size=x.shape[2:], mode="trilinear", align_corners=False)], dim=1)
+x = self.conv3(x)
+
+
 Epoch 1/300 [Train]:   0%|          | 0/93 [00:01<?, ?it/s]
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 104, in <module>
