@@ -1,3 +1,118 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from vitmae3d import ViTMAEForPreTraining
+
+# === 🔹 AttentionFusion 模块：将 skip 和 decoder 特征通过注意力融合 ===
+class AttentionFusion(nn.Module):
+    def __init__(self, main_dim, skip_dim, out_dim):
+        super().__init__()
+        self.q = nn.Conv3d(main_dim, out_dim, 1)
+        self.k = nn.Conv3d(skip_dim, out_dim, 1)
+        self.v = nn.Conv3d(skip_dim, out_dim, 1)
+        self.out = nn.Conv3d(out_dim, out_dim, 1)
+
+    def forward(self, main, skip):
+        q = self.q(main)
+        k = self.k(skip)
+        v = self.v(skip)
+        attn = torch.softmax((q * k).sum(dim=1, keepdim=True), dim=1)  # [B, 1, D, H, W]
+        fused = attn * v
+        return self.out(fused + main)  # 残差加回来
+
+# === 🔹 Decoder Block，带上采样 + attention 融合 skip + conv3d ===
+class AttentionDecoderBlock(nn.Module):
+    def __init__(self, in_dim, skip_dim, out_dim):
+        super().__init__()
+        self.upsample = nn.ConvTranspose3d(in_dim, out_dim, 2, stride=2)
+        self.fusion = AttentionFusion(out_dim, skip_dim, out_dim)
+        self.conv = nn.Sequential(
+            nn.Conv3d(out_dim, out_dim, 3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(out_dim, out_dim, 3, padding=1),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x, skip):
+        x = self.upsample(x)
+        x = self.fusion(x, skip)
+        return self.conv(x)
+
+# === 🔹 全部解码器结构（4个阶段） ===
+class MAEAttentionSkipDecoder(nn.Module):
+    def __init__(self, encoder_dim, skip_dims, num_classes):
+        super().__init__()
+        self.block1 = AttentionDecoderBlock(encoder_dim, skip_dims[0], 256)
+        self.block2 = AttentionDecoderBlock(256, skip_dims[1], 128)
+        self.block3 = AttentionDecoderBlock(128, skip_dims[2], 64)
+        self.block4 = nn.Sequential(
+            nn.ConvTranspose3d(64, 32, 2, stride=2),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(32, 32, 3, padding=1),
+            nn.ReLU(inplace=True)
+        )
+        self.out = nn.Conv3d(32, num_classes, 1)
+
+    def forward(self, x, skips):
+        x = self.block1(x, skips[0])
+        x = self.block2(x, skips[1])
+        x = self.block3(x, skips[2])
+        x = self.block4(x)
+        return self.out(x)
+
+# === 🔹 总体模型结构：ViT-MAE + 注意力 skip 解码器 ===
+class MAEUNetAttentionSegmentation(nn.Module):
+    def __init__(self, pretrained_path, config, num_classes=3):
+        super().__init__()
+        self.patch_size = tuple(config.patch_size)
+        self.hidden_dim = config.hidden_size
+        self.config = config
+
+        self.mae = ViTMAEForPreTraining.from_pretrained(
+            pretrained_path,
+            config=config,
+            ignore_mismatched_sizes=True
+        )
+        self.encoder = self.mae.vit
+
+        # 中间层 skip 映射投影
+        self.proj3 = nn.Conv3d(self.hidden_dim, 256, 1)
+        self.proj6 = nn.Conv3d(self.hidden_dim, 128, 1)
+        self.proj9 = nn.Conv3d(self.hidden_dim, 64, 1)
+
+        self.decoder = MAEAttentionSkipDecoder(
+            encoder_dim=self.hidden_dim,
+            skip_dims=[256, 128, 64],
+            num_classes=num_classes
+        )
+
+    def forward(self, x):
+        B = x.shape[0]
+        Pd, Ph, Pw = self.patch_size
+        D = self.config.image_size[0] // Pd
+        H = self.config.image_size[1] // Ph
+        W = self.config.image_size[2] // Pw
+
+        x_embed = self.encoder.embeddings(x)  # patch embedding
+        hidden_states = []
+        for i, blk in enumerate(self.encoder.encoder.layer):
+            x_embed = blk(x_embed)
+            if i in [3, 6, 9]:
+                hidden_states.append(x_embed)
+
+        def to_3d(feat):
+            feat = feat[:, 1:, :]
+            return feat.transpose(1, 2).reshape(B, self.hidden_dim, D, H, W)
+
+        main = to_3d(x_embed)
+        skip1 = F.interpolate(self.proj3(to_3d(hidden_states[0])), scale_factor=8.0, mode="trilinear", align_corners=False)
+        skip2 = F.interpolate(self.proj6(to_3d(hidden_states[1])), scale_factor=4.0, mode="trilinear", align_corners=False)
+        skip3 = F.interpolate(self.proj9(to_3d(hidden_states[2])), scale_factor=2.0, mode="trilinear", align_corners=False)
+
+        return self.decoder(main, [skip1, skip2, skip3])
+
+
+
 # mae3d_unet_finetune.py
 import torch
 import torch.nn as nn
