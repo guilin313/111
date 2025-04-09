@@ -1,3 +1,43 @@
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_affinity_3d.py", line 104, in <module>
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 105, in forward
+    return self.decoder(main, [skip1, skip2, skip3, skip4])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unet_finetune.py", line 53, in forward
+    return self.out(x)
+           ^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 725, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 720, in _conv_forward
+    return F.conv3d(
+           ^^^^^^^^^
+RuntimeError: Given groups=1, weight of size [3, 32, 1, 1, 1], expected input[2, 64, 32, 320, 320] to have 32 channels, but got 64 channels instead
+
+Process finished with exit code 1
+
+
+
 Epoch 1/300 [Train]:   0%|          | 0/93 [00:00<?, ?it/s]Total params: 108903715, Trainable: 33953443
 Epoch 1/300 [Train]:   0%|          | 0/93 [00:01<?, ?it/s]
 Traceback (most recent call last):
