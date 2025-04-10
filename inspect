@@ -1,0 +1,45 @@
+import os
+import torch
+from mae3d_unet_finetune import MAEUNet2SkipSegmentation
+from transformers import ViTMAEConfig
+
+# === 配置路径 ===
+CHECKPOINT_DIR = "./checkpoints_affinity3d2"
+CHECKPOINT_NAME = "mae3d_unet_epoch60.pth"  # 替换为你自己的 checkpoint 文件
+PRETRAINED_BACKBONE = "./output/vitmae3d"   # ViT-MAE 预训练权重路径
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# === 模型输入相关参数 ===
+CROP_SIZE = (32, 320, 320)
+NUM_CLASSES = 3
+
+# === 加载模型结构与权重 ===
+config = ViTMAEConfig.from_pretrained(PRETRAINED_BACKBONE)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+
+model = MAEUNet2SkipSegmentation(PRETRAINED_BACKBONE, config, num_classes=NUM_CLASSES)
+checkpoint_path = os.path.join(CHECKPOINT_DIR, CHECKPOINT_NAME)
+state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+model.load_state_dict(state_dict["model_state_dict"])
+model.to(DEVICE)
+model.eval()
+
+print("✅ 模型成功加载！")
+
+# === 打印完整模型结构树 ===
+print("\n🧩 完整模型结构:")
+print(model)
+
+# === 打印 Encoder 和 Decoder 结构 ===
+print("\n📦 Encoder 部分（ViT-MAE）:")
+print(model.encoder)
+
+print("\n🔧 Decoder 部分（U-Net）:")
+print(model.decoder)
+
+# === 可选：前向一次，检查输出形状 ===
+with torch.no_grad():
+    dummy_input = torch.randn(1, 4, *CROP_SIZE).to(DEVICE)
+    output = model(dummy_input)
+    print(f"\n🧠 模型输出形状: {output.shape}")
