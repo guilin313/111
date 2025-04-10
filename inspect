@@ -1,3 +1,236 @@
+🧩 完整模型结构:
+MAEUNet2SkipSegmentation(
+  (mae): ViTMAEForPreTraining(
+    (vit): ViTMAEModel(
+      (embeddings): ViTMAEEmbeddings(
+        (patch_embeddings): ViTMAEPatchEmbeddings3D(
+          (projection): Conv3d(1, 768, kernel_size=(16, 16, 16), stride=(16, 16, 16))
+        )
+      )
+      (encoder): ViTMAEEncoder(
+        (layer): ModuleList(
+          (0-9): 10 x ViTMAELayer(
+            (attention): ViTMAESdpaAttention(
+              (attention): ViTMAESdpaSelfAttention(
+                (query): Linear(in_features=768, out_features=768, bias=True)
+                (key): Linear(in_features=768, out_features=768, bias=True)
+                (value): Linear(in_features=768, out_features=768, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+              (output): ViTMAESelfOutput(
+                (dense): Linear(in_features=768, out_features=768, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+            (intermediate): ViTMAEIntermediate(
+              (dense): Linear(in_features=768, out_features=3072, bias=True)
+              (intermediate_act_fn): GELUActivation()
+            )
+            (output): ViTMAEOutput(
+              (dense): Linear(in_features=3072, out_features=768, bias=True)
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (layernorm_before): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+            (layernorm_after): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+          )
+        )
+      )
+      (layernorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+    )
+    (decoder): ViTMAEDecoder(
+      (decoder_embed): Linear(in_features=768, out_features=384, bias=True)
+      (decoder_layers): ModuleList(
+        (0-5): 6 x ViTMAELayer(
+          (attention): ViTMAESdpaAttention(
+            (attention): ViTMAESdpaSelfAttention(
+              (query): Linear(in_features=384, out_features=384, bias=True)
+              (key): Linear(in_features=384, out_features=384, bias=True)
+              (value): Linear(in_features=384, out_features=384, bias=True)
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (output): ViTMAESelfOutput(
+              (dense): Linear(in_features=384, out_features=384, bias=True)
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (intermediate): ViTMAEIntermediate(
+            (dense): Linear(in_features=384, out_features=1536, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): ViTMAEOutput(
+            (dense): Linear(in_features=1536, out_features=384, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+          (layernorm_before): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+          (layernorm_after): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+        )
+      )
+      (decoder_norm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+      (decoder_pred): Linear(in_features=384, out_features=4096, bias=True)
+    )
+  )
+  (encoder): ViTMAEModel(
+    (embeddings): ViTMAEEmbeddings(
+      (patch_embeddings): ViTMAEPatchEmbeddings3D(
+        (projection): Conv3d(1, 768, kernel_size=(16, 16, 16), stride=(16, 16, 16))
+      )
+    )
+    (encoder): ViTMAEEncoder(
+      (layer): ModuleList(
+        (0-9): 10 x ViTMAELayer(
+          (attention): ViTMAESdpaAttention(
+            (attention): ViTMAESdpaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (output): ViTMAESelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (intermediate): ViTMAEIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): ViTMAEOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+          (layernorm_before): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+          (layernorm_after): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+        )
+      )
+    )
+    (layernorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+  )
+  (proj2): Conv3d(768, 32, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  (proj4): Conv3d(768, 64, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  (proj6): Conv3d(768, 128, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  (proj8): Conv3d(768, 256, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  (decoder): UNet2Decoder(
+    (up1): ConvTranspose3d(768, 256, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+    (conv1): ResidualBlock(
+      (block): Sequential(
+        (0): Conv3d(512, 512, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+        (1): ReLU(inplace=True)
+        (2): Conv3d(512, 512, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      )
+      (relu): ReLU(inplace=True)
+    )
+    (up2): ConvTranspose3d(512, 128, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+    (conv2): ResidualBlock(
+      (block): Sequential(
+        (0): Conv3d(256, 256, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+        (1): ReLU(inplace=True)
+        (2): Conv3d(256, 256, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      )
+      (relu): ReLU(inplace=True)
+    )
+    (up3): ConvTranspose3d(256, 64, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+    (conv3): ResidualBlock(
+      (block): Sequential(
+        (0): Conv3d(128, 128, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+        (1): ReLU(inplace=True)
+        (2): Conv3d(128, 128, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      )
+      (relu): ReLU(inplace=True)
+    )
+    (up4): ConvTranspose3d(128, 32, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+    (conv4): ResidualBlock(
+      (block): Sequential(
+        (0): Conv3d(64, 64, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+        (1): ReLU(inplace=True)
+        (2): Conv3d(64, 64, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      )
+      (relu): ReLU(inplace=True)
+    )
+    (out): Conv3d(64, 3, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  )
+)
+
+📦 Encoder 部分（ViT-MAE）:
+ViTMAEModel(
+  (embeddings): ViTMAEEmbeddings(
+    (patch_embeddings): ViTMAEPatchEmbeddings3D(
+      (projection): Conv3d(1, 768, kernel_size=(16, 16, 16), stride=(16, 16, 16))
+    )
+  )
+  (encoder): ViTMAEEncoder(
+    (layer): ModuleList(
+      (0-9): 10 x ViTMAELayer(
+        (attention): ViTMAESdpaAttention(
+          (attention): ViTMAESdpaSelfAttention(
+            (query): Linear(in_features=768, out_features=768, bias=True)
+            (key): Linear(in_features=768, out_features=768, bias=True)
+            (value): Linear(in_features=768, out_features=768, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+          (output): ViTMAESelfOutput(
+            (dense): Linear(in_features=768, out_features=768, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+        )
+        (intermediate): ViTMAEIntermediate(
+          (dense): Linear(in_features=768, out_features=3072, bias=True)
+          (intermediate_act_fn): GELUActivation()
+        )
+        (output): ViTMAEOutput(
+          (dense): Linear(in_features=3072, out_features=768, bias=True)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+        (layernorm_before): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+        (layernorm_after): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+      )
+    )
+  )
+  (layernorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+)
+
+🔧 Decoder 部分（U-Net）:
+UNet2Decoder(
+  (up1): ConvTranspose3d(768, 256, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+  (conv1): ResidualBlock(
+    (block): Sequential(
+      (0): Conv3d(512, 512, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (1): ReLU(inplace=True)
+      (2): Conv3d(512, 512, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+    (relu): ReLU(inplace=True)
+  )
+  (up2): ConvTranspose3d(512, 128, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+  (conv2): ResidualBlock(
+    (block): Sequential(
+      (0): Conv3d(256, 256, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (1): ReLU(inplace=True)
+      (2): Conv3d(256, 256, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+    (relu): ReLU(inplace=True)
+  )
+  (up3): ConvTranspose3d(256, 64, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+  (conv3): ResidualBlock(
+    (block): Sequential(
+      (0): Conv3d(128, 128, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (1): ReLU(inplace=True)
+      (2): Conv3d(128, 128, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+    (relu): ReLU(inplace=True)
+  )
+  (up4): ConvTranspose3d(128, 32, kernel_size=(2, 2, 2), stride=(2, 2, 2))
+  (conv4): ResidualBlock(
+    (block): Sequential(
+      (0): Conv3d(64, 64, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+      (1): ReLU(inplace=True)
+      (2): Conv3d(64, 64, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1))
+    )
+    (relu): ReLU(inplace=True)
+  )
+  (out): Conv3d(64, 3, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+)
+
+
+
 import os
 import torch
 from mae3d_unet_finetune import MAEUNet2SkipSegmentation
