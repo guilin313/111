@@ -269,19 +269,23 @@ class UNETR(nn.Module):
         z6 = self.proj_feat(hidden_states_out[2], self.embed_dim, grid_size)
         z8 = self.proj_feat(hidden_states_out[3], self.embed_dim, grid_size)
 
-        z8 = self.decoder12_upsampler(z8)
-        z6 = self.decoder9(z6)
-        z6 = self.decoder9_upsampler(torch.cat([z6, z8], dim=1))
+        z8 = self.decoder8_upsampler(z8)
+        z6 = self.decoder6(z6)
+        z6 = self.decoder6_upsampler(torch.cat([z6, z8], dim=1))
 
-        z4 = self.decoder6(z4)
-        z4 = self.decoder6_upsampler(torch.cat([z4, z6], dim=1))
+        z4 = self.decoder4(z4)
+        z4 = self.decoder4_upsampler(torch.cat([z4, z6], dim=1))
 
-        z2 = self.decoder3(z2)
-        z2 = self.decoder3_upsampler(torch.cat([z2, z4], dim=1))
+        z2 = self.decoder2(z2)
+        z2 = self.decoder2_upsampler(torch.cat([z2, z4], dim=1))
 
         z0 = self.decoder0(x_in)
         output = self.decoder0_header(torch.cat([z0, z2], dim=1))
         return output
+
+
+
+
 
 
 class UNETR(nn.Module):
