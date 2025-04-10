@@ -1,3 +1,14 @@
+def proj_feat(self, x, hidden_size, grid_size):
+    # 处理 MAE 输出中多出的 cls token
+    expected_patches = grid_size[0] * grid_size[1] * grid_size[2]
+    if x.shape[1] == expected_patches + 1:
+        x = x[:, 1:, :]  # 去掉 cls token
+
+    x = x.view(x.size(0), *grid_size, hidden_size)  # [B, D, H, W, C]
+    x = x.permute(0, 4, 1, 2, 3).contiguous()       # [B, C, D, H, W]
+    return x
+
+
 import copy
 import torch
 import torch.nn as nn
