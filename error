@@ -1,3 +1,29 @@
+Epoch 1/300 [Train]:   0%|          | 0/93 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/train_continue.py", line 119, in <module>
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/MAE3d/mae3d_unetR.py", line 48, in forward
+    output = self.unetr(x, z12, [z3, z6, z9, z12])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: UNETR.forward() takes 2 positional arguments but 4 were given
+
+Process finished with exit code 1
+
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inspect_encoder.py", line 44, in <module>
     output = model(dummy_input)
