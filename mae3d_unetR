@@ -1,0 +1,49 @@
+import torch
+import torch.nn as nn
+from vitmae3d import ViTMAEForPreTraining
+from unetr import UNETR  # 假设你提供的 UNETR 类放在 unetr.py 文件中
+
+class MAEUNETRSkipSegmentation(nn.Module):
+    def __init__(self, pretrained_path, config, num_classes=3):
+        super().__init__()
+        self.config = config
+        self.patch_size = tuple(config.patch_size)
+        self.hidden_size = config.hidden_size
+        self.image_size = tuple(config.image_size)
+        self.num_classes = num_classes
+
+        # Load pre-trained MAE model
+        self.mae = ViTMAEForPreTraining.from_pretrained(
+            pretrained_path, config=config, ignore_mismatched_sizes=True
+        )
+        self.encoder = self.mae.vit
+
+        # Freeze encoder (optional, depends on whether you want to finetune)
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+        # Create UNETR decoder (uses same hidden size, patch size, etc.)
+        self.unetr = UNETR(
+            img_shape=self.image_size,
+            input_dim=config.num_channels,
+            output_dim=num_classes,
+            embed_dim=self.hidden_size,
+            patch_size=self.patch_size[0],  # assuming cube patch
+            num_heads=config.num_attention_heads,
+            dropout=config.hidden_dropout_prob
+        )
+
+    def forward(self, x):
+        # MAE encoder forward, get all hidden states
+        vit_output = self.encoder(pixel_values=x, output_hidden_states=True, return_dict=True)
+        hidden_states = vit_output.hidden_states
+
+        # Use skip connections from layers 3, 6, 9, 12 (as per UNETR)
+        z3 = hidden_states[2]  # block 3 output
+        z6 = hidden_states[5]  # block 6 output
+        z9 = hidden_states[8]  # block 9 output
+        z12 = hidden_states[11]  # block 12 output
+
+        # UNETR expects x and hidden_states_out = [z3, z6, z9, z12]
+        output = self.unetr(x, z12, [z3, z6, z9, z12])
+        return output
