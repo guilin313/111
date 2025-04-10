@@ -1,4 +1,17 @@
 Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/UNet2/train.py", line 61, in <module>
+    model = get_unetr_model(img_size=CROP_SIZE, in_channels=1, out_channels=NUM_CLASSES).to(DEVICE)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/guilin/PycharmProjects/UNet2/model_unetr.py", line 5, in get_unetr_model
+    return UNETR(
+           ^^^^^^
+TypeError: UNETR.__init__() got an unexpected keyword argument 'pos_embed'
+
+Process finished with exit code 1
+
+
+
+Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 44, in <module>
     model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=True))
   File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/torch/nn/modules/module.py", line 2584, in load_state_dict
