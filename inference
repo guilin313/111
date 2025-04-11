@@ -2,6 +2,128 @@ import os
 import torch
 import tifffile
 import numpy as np
+import argparse
+from torch.utils.data import DataLoader, Subset
+import h5py
+from cremi_affinity_3d_dataset import CREMIAffinity3DDataset
+from mae3d_unetR import MAEUNETRSkipSegmentation
+from transformers import ViTMAEConfig
+import torch.nn as nn
+from skimage.measure import label
+from skimage.filters import gaussian
+from scipy import ndimage
+
+from elf.segmentation import compute_rag, agglomerate  # ✅ RAG-based agglomeration
+
+# === 参数设置 ===
+MERGE_THRESHOLD = 0.4  # agglomeration merge阈值
+EDGE_MODE = "min"      # edge构建方式：min / mean / z_only
+
+# === 路径配置 ===
+CHECKPOINT_PATH = "checkpoints_affinity3d/mae3d_unet_epoch300.pth"
+CONFIG_PATH = "./output/vitmae3d"
+H5_PATH = "./segementation_data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_cremi_agglomeration"
+CROP_SIZE = (32, 320, 320)
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MEAN = 143.51 / 255
+STD = 45.29 / 255
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# === 加载 ground truth neuron_ids ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === 构建 Dataset（10% C 组作为测试集）===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, patch_size=CROP_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === 加载模型 ===
+config = ViTMAEConfig.from_pretrained(CONFIG_PATH)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+model = MAEUNETRSkipSegmentation(CONFIG_PATH, config, num_classes=3).to(DEVICE)
+model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+model.eval()
+
+criterion = nn.BCEWithLogitsLoss()
+restored_instances = []
+gt_labels = []
+restored_raws = []
+all_loss = []
+
+# === 推理 + 实例恢复 ===
+with torch.no_grad():
+    for i, (raw, target_aff) in enumerate(test_loader):
+        raw_np = raw[0, 0].numpy()
+        raw_uint8 = ((raw_np * STD + MEAN) * 255).clip(0, 255).astype(np.uint8)
+        restored_raws.append(raw_uint8)
+
+        z, y, x = full_dataset.dataset.starts[test_indices[i]]
+        dz, dy, dx = CROP_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+        gt_labels.append(gt)
+
+        raw = raw.to(DEVICE)
+        target_aff = target_aff.to(DEVICE)
+        output = model(raw)
+        loss = criterion(output, target_aff)
+        all_loss.append(loss.item())
+
+        pred = torch.sigmoid(output)[0].cpu().numpy()  # [3, D, H, W]
+
+        print(f"[Patch {i}] pred max: {pred.max():.4f}, mean: {pred.mean():.4f}, loss: {loss.item():.4f}")
+
+        # === 构建边界图 ===
+        if EDGE_MODE == "min":
+            edge = 1 - np.min(pred, axis=0)
+        elif EDGE_MODE == "mean":
+            edge = 1 - np.mean(pred, axis=0)
+        elif EDGE_MODE == "z_only":
+            edge = 1 - pred[0]
+        else:
+            raise ValueError(f"Unsupported edge_mode: {EDGE_MODE}")
+
+        edge = gaussian(edge, sigma=1.0)
+
+        # === watershed fragmentation ===
+        distance = ndimage.distance_transform_edt(edge < MERGE_THRESHOLD)
+        markers = label(distance > np.percentile(distance, 99)).astype(np.int32)
+        fragments = watershed=edge < MERGE_THRESHOLD
+        fragments = label(fragments)
+
+        # === 构建 RAG + affinity-based agglomeration ===
+        rag = compute_rag(fragments, number_of_labels=int(fragments.max() + 1))
+        edge_weights = np.mean(pred, axis=0).astype(np.float32)  # average affinity
+        instance = agglomerate(rag, edge_weights, threshold=MERGE_THRESHOLD).astype(np.uint16)
+
+        # === 保存结果 ===
+        restored_instances.append(instance)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"prob_edge_patch{i}.tif"), edge.astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"fragments_patch{i}.tif"), fragments.astype(np.uint16))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+
+# === 保存所有 patch ===
+for i, raw in enumerate(restored_raws):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw)
+for i, gt in enumerate(gt_labels):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations and raw/GT to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
+
+import os
+import torch
+import tifffile
+import numpy as np
 from torch.utils.data import DataLoader, Subset
 from skimage.segmentation import watershed
 from skimage.filters import gaussian
