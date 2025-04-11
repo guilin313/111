@@ -1,3 +1,17 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
+yes
+/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py:47: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE))
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py", line 55, in <module>
+    for i, (raw, target_aff) in enumerate(test_loader):
+           ^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+Process finished with exit code 1
+
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/UNet2/train.py", line 61, in <module>
     model = get_unetr_model(img_size=CROP_SIZE, in_channels=1, out_channels=NUM_CLASSES).to(DEVICE)
