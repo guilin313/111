@@ -1,3 +1,32 @@
+        print(f"[Patch {i}] pred max: {pred.max():.4f}, mean: {pred.mean():.4f}, loss: {loss.item():.4f}")
+
+        # === Step 3: Fragmentation using watershed ===
+        edge = 1 - np.mean(pred, axis=0)  # [D, H, W]
+        edge = gaussian(edge, sigma=1.0)
+        distance = ndimage.distance_transform_edt(edge < 0.5)
+        markers = label(distance > np.percentile(distance, 99)).astype(np.int32)
+        fragments = watershed(edge, markers, mask=(edge < 0.5))
+
+        # === Step 4 & 5: Connected components (simplified agglomeration) ===
+        instance = label(fragments, connectivity=1).astype(np.uint16)
+        restored_instances.append(instance)
+
+        # === Save debug ===
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"prob_z_aff_patch{i}.tif"), pred[0].astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"fragments_patch{i}.tif"), fragments.astype(np.uint16))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+
+# === Save all patches ===
+for i, raw in enumerate(restored_raws):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw)
+for i, gt in enumerate(gt_labels):
+    tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+print(f"✅ Saved {len(restored_instances)} baseline instance segmentations and raw/GT to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
+
 # inference_affinity_3d.py
 import os
 import torch
