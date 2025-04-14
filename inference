@@ -1,3 +1,30 @@
+
+        # === Fragmentation
+        edge = 1 - np.mean(pred, axis=0)
+        edge = gaussian(edge, sigma=1.0)
+        distance = ndimage.distance_transform_edt(edge < 0.4)
+        markers = label(distance > np.percentile(distance, 99)).astype(np.int32)
+        fragments = label(edge < 0.5).astype(np.uint64)
+
+        print(f"[Patch {i}] fragments count: {np.unique(fragments).size}")
+
+        # === WaterZ agglomeration
+        affs = pred.astype(np.float32)
+        seg = next(waterz.agglomerate(affs, [THRESHOLD], fragments=fragments))
+        instance = seg.astype(np.uint16)
+        restored_instances.append(instance)
+
+        # === Save patch results
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw_uint8)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"prob_edge_patch{i}.tif"), edge.astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"fragments_patch{i}.tif"), fragments)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations and debug outputs to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
 pip install git+https://github.com/funkelab/waterz.git
 pip install -U pip setuptools wheel cython numpy
 
