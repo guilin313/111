@@ -1,3 +1,100 @@
+[Patch 0] pred max: 0.9935, mean: 0.7898, loss: 0.2195
+[Patch 0] fragments count: 33
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 33 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 66
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.0900373
+threshold exceeded
+merged 31 edges
+extracting segmentation
+[Patch 1] pred max: 0.9945, mean: 0.8208, loss: 0.1927
+[Patch 1] fragments count: 3
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 3 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 1
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.262083
+merged 1 edges
+extracting segmentation
+[Patch 2] pred max: 0.9892, mean: 0.7962, loss: 0.2164
+[Patch 2] fragments count: 27
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 27 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 48
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.0987157
+merged 25 edges
+extracting segmentation
+[Patch 3] pred max: 0.9936, mean: 0.8094, loss: 0.2022
+[Patch 3] fragments count: 14
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 14 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 26
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.0891793
+merged 12 edges
+extracting segmentation
+[Patch 4] pred max: 0.9881, mean: 0.7977, loss: 0.2123
+[Patch 4] fragments count: 19
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 19 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 44
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.123549
+threshold exceeded
+merged 17 edges
+extracting segmentation
+[Patch 5] pred max: 0.9858, mean: 0.8011, loss: 0.2074
+[Patch 5] fragments count: 34
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 34 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 85
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+min edge score 0.0776682
+threshold exceeded
+merged 32 edges
+extracting segmentation
+✅ Saved 6 instance segmentations and debug outputs to ./results_affinity3d_waterz
+✅ Average test loss: 0.2084
+
+
 [Patch 0] pred max: 0.9864, mean: 0.7898, loss: 0.2194
 [Patch 0] fragments count: 34
 Re-using already compiled waterz version
