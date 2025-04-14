@@ -1,3 +1,80 @@
+[Patch 0] pred max: 0.9863, mean: 0.7899, loss: 0.2193
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+[Patch 1] pred max: 0.9899, mean: 0.8206, loss: 0.1930
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+[Patch 2] pred max: 0.9894, mean: 0.7961, loss: 0.2165
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+[Patch 3] pred max: 0.9937, mean: 0.8094, loss: 0.2023
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+[Patch 4] pred max: 0.9896, mean: 0.7977, loss: 0.2124
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+[Patch 5] pred max: 0.9848, mean: 0.8012, loss: 0.2073
+Re-using already compiled waterz version
+Preparing segmentation volume...
+counting regions and sizes...
+creating region graph for 2 nodes
+creating statistics provider
+extracting region graph...
+Region graph number of edges: 0
+merging until threshold 0.5
+computing initial scores
+merging until 0.5
+merged 0 edges
+✅ Saved 6 instance segmentations and debug outputs to ./results_affinity3d_waterz
+✅ Average test loss: 0.2085
+
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/inference_3d2.py", line 6, in <module>
     from skimage.filters import gaussian
