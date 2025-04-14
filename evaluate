@@ -1,0 +1,39 @@
+import os
+import tifffile
+import numpy as np
+from cremi_tools.metrics import adapted_rand, voi
+
+# === 配置路径 ===
+RESULT_DIR = "./results_affinity3d_waterz"  # ← 改为你的输出目录
+
+# 自动找到所有 instance_patch{i}.tif
+PATCHES = [f for f in os.listdir(RESULT_DIR) if f.startswith("instance_patch") and f.endswith(".tif")]
+PATCHES.sort(key=lambda x: int(x.replace("instance_patch", "").replace(".tif", "")))
+
+scores = []
+
+for fname in PATCHES:
+    i = int(fname.replace("instance_patch", "").replace(".tif", ""))
+    inst_path = os.path.join(RESULT_DIR, f"instance_patch{i}.tif")
+    gt_path = os.path.join(RESULT_DIR, f"gt_patch{i}.tif")
+
+    pred = tifffile.imread(inst_path)
+    gt = tifffile.imread(gt_path)
+
+    # === 评估指标 ===
+    arand = adapted_rand(pred, gt)[-1]
+    voi_split, voi_merge = voi(pred, gt)
+    voi_sum = voi_split + voi_merge
+
+    scores.append((i, arand, voi_split, voi_merge, voi_sum))
+    print(f"[Patch {i}] ARAND: {arand:.4f}, VOI: {voi_sum:.4f} (split: {voi_split:.4f}, merge: {voi_merge:.4f})")
+
+# === 平均指标 ===
+arands = [s[1] for s in scores]
+voi_splits = [s[2] for s in scores]
+voi_merges = [s[3] for s in scores]
+voi_sums = [s[4] for s in scores]
+
+print("\n=== Average Metrics ===")
+print(f"ARAND: {np.mean(arands):.4f}")
+print(f"VOI:   {np.mean(voi_sums):.4f} (split: {np.mean(voi_splits):.4f}, merge: {np.mean(voi_merges):.4f})")
