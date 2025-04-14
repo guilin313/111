@@ -1,3 +1,9 @@
+conda activate pt12  # 或 source activate pt12
+pip install -U pip setuptools wheel cython
+pip install . --no-build-isolation
+
+
+
 Processing /home/guilin/Downloads/waterz-master
   Installing build dependencies ... done
   Getting requirements to build wheel ... error
