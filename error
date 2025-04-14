@@ -5,6 +5,11 @@
 [Patch 4] ARAND: 0.6393, VOI: 4.0402 (split: 2.0701, merge: 1.9701)
 [Patch 5] ARAND: 0.6497, VOI: 3.7094 (split: 1.7294, merge: 1.9800)
 
+=== Average Metrics ===
+ARAND: 0.5492
+VOI:   3.4827 (split: 1.4532, merge: 2.0295)
+
+Process finished with exit code 0
 
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/evaluate_segmentation.py", line 24, in <module>
