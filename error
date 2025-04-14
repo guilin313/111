@@ -1,3 +1,18 @@
+[Patch 0] pred max: 0.9864, mean: 0.7898, loss: 0.2194
+[Patch 0] fragments count: 34
+Re-using already compiled waterz version
+Preparing segmentation volume...
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference_3d2.py", line 89, in <module>
+    seg = next(waterz.agglomerate(affs, [THRESHOLD], fragments=fragments))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "waterz_ee2c27d157b5fd2f8fcb276fc5aa64b2.pyx", line 39, in agglomerate
+    cdef WaterzState state = __initialize(affs, segmentation, gt, aff_threshold_low, aff_threshold_high, find_fragments)
+  File "waterz_ee2c27d157b5fd2f8fcb276fc5aa64b2.pyx", line 73, in waterz_ee2c27d157b5fd2f8fcb276fc5aa64b2.__initialize
+    def __initialize(
+ValueError: Buffer dtype mismatch, expected 'uint64_t' but got 'int'
+
+
 [Patch 0] pred max: 0.9859, mean: 0.7900, loss: 0.2192
 [Patch 0] fragments count: 2
 Re-using already compiled waterz version
