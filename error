@@ -1,3 +1,42 @@
+Processing /home/guilin/Downloads/waterz-master
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... error
+  error: subprocess-exited-with-error
+  
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─> [18 lines of output]
+      Traceback (most recent call last):
+        File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+          main()
+        File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 143, in get_requires_for_build_wheel
+          return hook(config_settings)
+                 ^^^^^^^^^^^^^^^^^^^^^
+        File "/tmp/pip-build-env-f3jgr4lf/overlay/lib/python3.12/site-packages/setuptools/build_meta.py", line 334, in get_requires_for_build_wheel
+          return self._get_build_requires(config_settings, requirements=[])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/tmp/pip-build-env-f3jgr4lf/overlay/lib/python3.12/site-packages/setuptools/build_meta.py", line 304, in _get_build_requires
+          self.run_setup()
+        File "/tmp/pip-build-env-f3jgr4lf/overlay/lib/python3.12/site-packages/setuptools/build_meta.py", line 320, in run_setup
+          exec(code, locals())
+        File "<string>", line 4, in <module>
+      ModuleNotFoundError: No module named 'Cython'
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: subprocess-exited-with-error
+
+× Getting requirements to build wheel did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py 
 yes
 /home/guilin/PycharmProjects/MAE3d/inference_affinity_3d.py:47: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
