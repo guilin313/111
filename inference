@@ -3,6 +3,118 @@ import torch
 import tifffile
 import numpy as np
 from torch.utils.data import DataLoader, Subset
+from skimage.segmentation import watershed
+from skimage.filters import gaussian
+from skimage.measure import label
+import h5py
+from cremi_dataset import CREMIAffinity3DDataset
+from mae3d_unetR import MAEUNETRSkipSegmentation
+from transformers import ViTMAEConfig
+import torch.nn as nn
+from scipy import ndimage
+
+# === Config ===
+CHECKPOINT_PATH = "checkpoints_affinity3d3/mae3d_unet_epoch1360.pth"
+CONFIG_PATH = "./output/vitmae3d"
+H5_PATH = "./segementation_data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_affinity3d4"
+CROP_SIZE = (32, 320, 320)
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MEAN = 143.51 / 255
+STD = 45.29 / 255
+THRESHOLD = 0.7
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# === Load full ground truth neuron_ids ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === Dataset (10% C as test set) ===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === Load model ===
+config = ViTMAEConfig.from_pretrained(CONFIG_PATH)
+config.image_size = CROP_SIZE
+config.mask_ratio = 0.0
+model = MAEUNETRSkipSegmentation(CONFIG_PATH, config, num_classes=3).to(DEVICE)
+model.load_state_dict(torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=True))
+model.eval()
+
+criterion = nn.BCEWithLogitsLoss()
+
+# === Inference ===
+restored_raws = []
+restored_instances = []
+gt_labels = []
+all_loss = []
+
+with torch.no_grad():
+    for i, (raw, target_aff, boundary) in enumerate(test_loader):
+        raw_np = raw[0, 0].numpy()
+        raw_uint8 = ((raw_np * STD +MEAN) * 255).clip(0, 255).astype(np.uint8)
+        restored_raws.append(raw_uint8)
+
+        z, y, x = full_dataset.starts[test_indices[i]]
+        dz, dy, dx = CROP_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+        gt_labels.append(gt)
+
+        raw = raw.to(DEVICE)
+        target_aff = target_aff.to(DEVICE)
+
+        output = model(raw)
+        loss = criterion(output, target_aff)
+        all_loss.append(loss.item())
+
+
+        pred = torch.sigmoid(output)[0].cpu().numpy()  # [3, D, H, W]
+        print(f"[Patch {i}] pred max: {pred.max():.4f}, mean: {pred.mean():.4f}, loss: {loss.item():.4f}")
+
+        # === Step 3: Fragmentation using watershed ===
+        edge = 1 - np.mean(pred, axis=0)  # [D, H, W]
+        # weight_aff = (
+        #     1.0 * pred[0] +
+        #     1.0 * pred[1] +
+        #     1.0 * pred[2]
+        # ) / 3.0
+        # edge = 1 - weight_aff
+        edge = gaussian(edge, sigma=1.0)
+        distance = ndimage.distance_transform_edt(edge < 0.3)
+        markers = label(distance > np.percentile(distance, 99)).astype(np.int32)
+        fragments = watershed(edge, markers, mask=(edge < 0.5))
+
+        # === Step 4 & 5: Connected components (simplified agglomeration) ===
+        instance = label(fragments, connectivity=1).astype(np.uint16)
+        restored_instances.append(instance)
+
+        # === Save debug ===
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"prob_z_aff_patch{i}.tif"), pred[0].astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"fragments_patch{i}.tif"), fragments.astype(np.uint16))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+
+    # === Save all patches ===
+    for i, raw in enumerate(restored_raws):
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw)
+    for i, gt in enumerate(gt_labels):
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+
+    print(f"✅ Saved {len(restored_instances)} baseline instance segmentations and raw/GT to {SAVE_DIR}")
+    print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
+
+import os
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import DataLoader, Subset
 import h5py
 from cremi_affinity_3d_dataset import CREMIAffinity3DDataset
 from mae3d_unetR import MAEUNETRSkipSegmentation
