@@ -1,3 +1,14 @@
+Traceback (most recent call last):
+  File "/home/guilin/PycharmProjects/MAE3d/inference_3d2.py", line 6, in <module>
+    from skimage.filters import gaussian
+  File "/home/guilin/miniconda3/envs/pt12/lib/python3.12/site-packages/skimage/__init__.py", line 124, in <module>
+    from ._shared import geometry
+  File "geometry.pyx", line 1, in init skimage._shared.geometry
+ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+
+Process finished with exit code 1
+
+
 conda activate pt12  # 或 source activate pt12
 pip install -U pip setuptools wheel cython
 pip install . --no-build-isolation
