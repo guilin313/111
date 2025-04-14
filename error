@@ -1,3 +1,11 @@
+[Patch 0] ARAND: 0.5549, VOI: 3.5720 (split: 1.3232, merge: 2.2488)
+[Patch 1] ARAND: 0.5500, VOI: 3.1415 (split: 1.4677, merge: 1.6738)
+[Patch 2] ARAND: 0.3893, VOI: 2.9662 (split: 1.2318, merge: 1.7344)
+[Patch 3] ARAND: 0.5120, VOI: 3.4666 (split: 0.8966, merge: 2.5701)
+[Patch 4] ARAND: 0.6393, VOI: 4.0402 (split: 2.0701, merge: 1.9701)
+[Patch 5] ARAND: 0.6497, VOI: 3.7094 (split: 1.7294, merge: 1.9800)
+
+
 Traceback (most recent call last):
   File "/home/guilin/PycharmProjects/MAE3d/evaluate_segmentation.py", line 24, in <module>
     arand = adapted_rand(pred, gt)[-1]
