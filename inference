@@ -11,6 +11,107 @@ import h5py
 import waterz
 
 from cremi_dataset import CREMIAffinity3DDataset
+from model_unetr import get_unetr_model
+import torch.nn as nn
+
+# === CONFIG ===
+CHECKPOINT_PATH = "checkpoints_unetr_affinity3d/unetr_epoch290.pth"
+H5_PATH = "./segementation_data/sample_C_20160501.hdf"
+SAVE_DIR = "./results_unetr_affinity3d_waterz"
+CROP_SIZE = (32, 320, 320)
+THRESHOLD = 0.7
+BATCH_SIZE = 1
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MEAN = 143.51 / 255
+STD = 45.29 / 255
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# === Load GT neuron_ids ===
+with h5py.File(H5_PATH, "r") as f:
+    full_gt_labels = f["volumes/labels/neuron_ids"][()]
+
+# === Dataset (10% of C as test set) ===
+full_dataset = CREMIAffinity3DDataset(H5_PATH, crop_size=CROP_SIZE)
+total_len = len(full_dataset)
+val_len = int(total_len * 0.1)
+test_indices = list(range(total_len - val_len, total_len))
+test_dataset = Subset(full_dataset, test_indices)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+
+# === Load model ===
+model = get_unetr_model(img_size=CROP_SIZE, in_channels=1, out_channels=3).to(DEVICE)
+checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
+model.load_state_dict(checkpoint["model_state_dict"])
+model.eval()
+
+criterion = nn.BCEWithLogitsLoss()
+restored_instances, gt_labels, restored_raws, all_loss = [], [], [], []
+
+# === Inference ===
+with torch.no_grad():
+    for i, (raw, target_aff, _) in enumerate(test_loader):
+        raw_np = raw[0, 0].numpy()
+        raw_uint8 = ((raw_np * STD + MEAN) * 255).clip(0, 255).astype(np.uint8)
+        restored_raws.append(raw_uint8)
+
+        # Load GT patch
+        z, y, x = full_dataset.starts[test_indices[i]]
+        dz, dy, dx = CROP_SIZE
+        gt = full_gt_labels[z:z+dz, y:y+dy, x:x+dx].astype(np.uint16)
+        gt_labels.append(gt)
+
+        raw = raw.to(DEVICE)
+        target_aff = target_aff.to(DEVICE)
+
+        output = model(raw)
+        loss = criterion(output, target_aff)
+        all_loss.append(loss.item())
+
+        pred = torch.sigmoid(output)[0].cpu().numpy()  # shape: [3, D, H, W]
+        print(f"[Patch {i}] pred max: {pred.max():.4f}, mean: {pred.mean():.4f}, loss: {loss.item():.4f}")
+
+        # === Fragmentation
+        edge = 1 - np.mean(pred, axis=0)
+        edge = gaussian(edge, sigma=1.0)
+        distance = ndimage.distance_transform_edt(edge < 0.4)
+        markers = label(distance > np.percentile(distance, 99)).astype(np.int32)
+        fragments = watershed(edge, markers, mask=(edge < 0.5)).astype(np.uint64)
+
+        print(f"[Patch {i}] fragments count: {np.unique(fragments).size}")
+
+        # === WaterZ agglomeration
+        affs = pred.astype(np.float32)
+        seg = next(waterz.agglomerate(affs, [THRESHOLD], fragments=fragments))
+        instance = seg.astype(np.uint16)
+        restored_instances.append(instance)
+
+        # === Save patch results
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"raw_patch{i}.tif"), raw_uint8)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"gt_patch{i}.tif"), gt)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"prob_edge_patch{i}.tif"), edge.astype(np.float32))
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"fragments_patch{i}.tif"), fragments)
+        tifffile.imwrite(os.path.join(SAVE_DIR, f"instance_patch{i}.tif"), instance)
+
+print(f"✅ Saved {len(restored_instances)} instance segmentations and debug outputs to {SAVE_DIR}")
+print(f"✅ Average test loss: {np.mean(all_loss):.4f}")
+
+
+
+
+import os
+import torch
+import tifffile
+import numpy as np
+from torch.utils.data import DataLoader, Subset
+from skimage.filters import gaussian
+from skimage.segmentation import watershed
+from skimage.measure import label
+from scipy import ndimage
+import h5py
+import waterz
+
+from cremi_dataset import CREMIAffinity3DDataset
 from mae3d_unetR import MAEUNETRSkipSegmentation
 from transformers import ViTMAEConfig
 import torch.nn as nn
