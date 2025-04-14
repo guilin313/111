@@ -1,3 +1,6 @@
+pip install git+https://github.com/funkelab/waterz.git
+
+
 import os
 import torch
 import tifffile
