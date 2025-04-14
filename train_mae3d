@@ -12,6 +12,162 @@ from model_unetr import get_unetr_model
 
 # === Config ===
 H5_PATHS = [
+    "./segementation_data/sample_A_20160501.hdf",
+    "./segementation_data/sample_B_20160501.hdf",
+    "./segementation_data/sample_C_20160501.hdf",
+]
+CHECKPOINT_DIR = "./checkpoints_unetr_affinity3d1"
+CROP_SIZE = (32, 320, 320)
+BATCH_SIZE = 2
+NUM_EPOCHS = 3000
+NUM_CLASSES = 3
+LR = 5e-4
+LOG_DIR = "./logs_unetr_affinity3d1"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+
+# === Focal Loss ===
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=2.0, alpha=0.25, channel_weights=(1.0, 1.0, 1.0)):
+        super().__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.register_buffer(
+            'channel_weights',
+            torch.tensor(channel_weights).view(1, NUM_CLASSES, 1, 1, 1)
+        )
+
+    def forward(self, input, target):
+        bce_loss = nn.functional.binary_cross_entropy_with_logits(input, target, reduction='none')
+        prob = torch.sigmoid(input)
+        focal_weight = self.alpha * (1 - prob) ** self.gamma * target + \
+                       (1 - self.alpha) * prob ** self.gamma * (1 - target)
+        focal_loss = focal_weight * bce_loss
+        return (focal_loss * self.channel_weights.to(input.device)).mean()
+
+# === Dataset ===
+dataset_a = CREMIAffinity3DDataset(H5_PATHS[0], crop_size=CROP_SIZE)
+dataset_b = CREMIAffinity3DDataset(H5_PATHS[1], crop_size=CROP_SIZE)
+dataset_c = CREMIAffinity3DDataset(H5_PATHS[2], crop_size=CROP_SIZE)
+
+val_ratio = 0.1
+val_size = int(len(dataset_c) * val_ratio)
+train_size = len(dataset_c) - val_size
+train_c, val_c = random_split(dataset_c, [train_size, val_size], generator=torch.Generator().manual_seed(42))
+
+train_dataset = ConcatDataset([dataset_a, dataset_b, train_c])
+val_dataset = val_c
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+
+# === Model ===
+model = get_unetr_model(img_size=CROP_SIZE, in_channels=1, out_channels=NUM_CLASSES).to(DEVICE)
+optimizer = optim.AdamW(model.parameters(), lr=LR)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+criterion = FocalLoss(gamma=2.0, alpha=0.25, channel_weights=(1.0, 1.0, 1.0))
+
+# === TensorBoard Writer ===
+writer = SummaryWriter(LOG_DIR)
+
+# === Resume Checkpoint ===
+def get_latest_checkpoint(path):
+    checkpoint_files = glob.glob(os.path.join(path, "unetr_epoch*.pth"))
+    if not checkpoint_files:
+        return None
+    def extract_epoch(filename):
+        match = re.search(r"epoch(\d+)", filename)
+        return int(match.group(1)) if match else -1
+    checkpoint_files.sort(key=extract_epoch, reverse=True)
+    return checkpoint_files[0]
+
+START_EPOCH = 0
+resume_path = get_latest_checkpoint(CHECKPOINT_DIR)
+if resume_path is not None:
+    print(f"🔁 Resuming training from: {resume_path}")
+    checkpoint = torch.load(resume_path, map_location=DEVICE)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+    START_EPOCH = checkpoint["epoch"]
+else:
+    print("🚀 Starting training from scratch")
+
+# === Metric ===
+def affinity_accuracy(preds, targets):
+    preds = torch.sigmoid(preds) > 0.5
+    targets = targets > 0.5
+    return (preds == targets).float().mean().item()
+
+# === Training Loop ===
+for epoch in range(START_EPOCH, NUM_EPOCHS):
+    model.train()
+    running_loss = 0.0
+    for inputs, targets, boundary in tqdm(train_loader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} [Train]"):
+        inputs, targets, boundary = inputs.to(DEVICE), targets.to(DEVICE), boundary.to(DEVICE)
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        weight = 1.0 + 1.0 * boundary.unsqueeze(1)
+        loss = criterion(outputs, targets) * weight
+        loss = loss.mean()
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+
+    avg_train_loss = running_loss / len(train_loader)
+    writer.add_scalar("Loss/train", avg_train_loss, epoch)
+
+    # === Validation ===
+    model.eval()
+    val_loss = 0.0
+    val_acc = 0.0
+    with torch.no_grad():
+        for inputs, targets, boundary in tqdm(val_loader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} [Val]"):
+            inputs, targets, boundary = inputs.to(DEVICE), targets.to(DEVICE), boundary.to(DEVICE)
+
+            outputs = model(inputs)
+            weight = 1.0 + 1.0 * boundary.unsqueeze(1)
+            loss = criterion(outputs, targets) * weight
+            val_loss += loss.mean().item()
+            val_acc += affinity_accuracy(outputs, targets)
+
+    avg_val_loss = val_loss / len(val_loader)
+    avg_val_acc = val_acc / len(val_loader)
+    writer.add_scalar("Loss/val", avg_val_loss, epoch)
+    writer.add_scalar("Metric/AffinityAcc", avg_val_acc, epoch)
+    writer.add_scalar("LR", scheduler.get_last_lr()[0], epoch)
+    print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, AffinityAcc: {avg_val_acc:.4f}")
+
+    scheduler.step()
+
+    if (epoch + 1) % 10 == 0:
+        torch.save({
+            "epoch": epoch + 1,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
+        }, os.path.join(CHECKPOINT_DIR, f"unetr_epoch{epoch+1}.pth"))
+
+writer.close()
+
+
+
+
+import os
+import glob
+import re
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, ConcatDataset, random_split
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+from cremi_dataset import CREMIAffinity3DDataset
+from model_unetr import get_unetr_model
+
+# === Config ===
+H5_PATHS = [
     "/path/to/sample_A_20160501.hdf",
     "/path/to/sample_B_20160501.hdf",
     "/path/to/sample_C_20160501.hdf",
