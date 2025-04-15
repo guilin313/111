@@ -1,3 +1,30 @@
+# ✅ 修改推理文件，将 BCEWithLogitsLoss 替换为 FocalLoss 实现
+
+import torch.nn.functional as F
+
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=2.0, reduction='mean'):
+        super().__init__()
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, input, target):
+        bce_loss = F.binary_cross_entropy_with_logits(input, target, reduction='none')
+        probas = torch.sigmoid(input)
+        focal_weight = (1 - probas) ** self.gamma * target + probas ** self.gamma * (1 - target)
+        loss = focal_weight * bce_loss
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        return loss
+
+# 替换原先的 BCE loss 定义
+criterion = FocalLoss(gamma=2.0)
+
+
+
+
 import os
 import glob
 import re
