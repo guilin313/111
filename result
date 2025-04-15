@@ -1,3 +1,36 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/evaluate_segmentation.py 
+[Patch 0] ARAND: 0.7455, VOI: 3.6508 (split: 2.1139, merge: 1.5369)
+[Patch 1] ARAND: 0.7420, VOI: 2.9048 (split: 1.8878, merge: 1.0169)
+[Patch 2] ARAND: 0.8466, VOI: 3.3537 (split: 1.3911, merge: 1.9626)
+[Patch 3] ARAND: 0.7340, VOI: 3.1112 (split: 1.1242, merge: 1.9870)
+[Patch 4] ARAND: 0.6949, VOI: 3.2424 (split: 1.2854, merge: 1.9569)
+[Patch 5] ARAND: 0.6946, VOI: 3.5586 (split: 1.5267, merge: 2.0319)
+
+=== Average Metrics ===
+ARAND: 0.7429
+VOI:   3.3036 (split: 1.5549, merge: 1.7487)
+
+Process finished with exit code 0
+
+
+
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/UNetR/evaluate.py 
+[Patch 0] ARAND: 0.5427, VOI: 3.3525 (split: 1.0600, merge: 2.2925)
+[Patch 1] ARAND: 0.3362, VOI: 2.5157 (split: 0.4714, merge: 2.0444)
+[Patch 2] ARAND: 0.6086, VOI: 3.2919 (split: 0.8182, merge: 2.4737)
+[Patch 3] ARAND: 0.5950, VOI: 3.6729 (split: 0.9357, merge: 2.7372)
+[Patch 4] ARAND: 0.4610, VOI: 3.3643 (split: 1.0542, merge: 2.3102)
+[Patch 5] ARAND: 0.6534, VOI: 3.7482 (split: 1.1203, merge: 2.6279)
+
+=== Average Metrics ===
+ARAND: 0.5328
+VOI:   3.3243 (split: 0.9100, merge: 2.4143)
+
+Process finished with exit code 0
+
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference.py 
 Loading model from: /home/guilin/PycharmProjects/MAE3d/output/vitmae3d
 yes
