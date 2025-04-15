@@ -1,3 +1,13 @@
+# === Freeze all encoder layers first
+for param in self.encoder.parameters():
+    param.requires_grad = False
+
+# === Unfreeze last two transformer blocks: encoder.layer[8] and encoder.layer[9]
+for i in [8, 9]:
+    for param in self.encoder.encoder.layer[i].parameters():
+        param.requires_grad = True
+
+
 import torch
 import torch.nn as nn
 from vitmae3d import ViTMAEForPreTraining
