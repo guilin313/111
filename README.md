@@ -5,6 +5,11 @@
 ![Screenshot from 2025-03-21 11-04-10](https://github.com/user-attachments/assets/9ca2d639-7ed8-4c9a-840b-897def511b5a)
 ![Screenshot from 2025-03-21 14-02-54](https://github.com/user-attachments/assets/0614289c-5f89-4a4c-9dde-6156a42d40fc)
 
+![Screenshot from 2025-04-17 17-20-51](https://github.com/user-attachments/assets/67e02e93-8af3-4bbf-8ef4-a7376bc67a12)
+![Screenshot from 2025-04-17 17-20-59](https://github.com/user-attachments/assets/201753d4-d0ef-4b01-b6ed-e4e04a74fdc6)
+![Screenshot from 2025-04-17 17-21-07](https://github.com/user-attachments/assets/db714743-5ab4-4039-8665-fd9a51b0580c)
+![Screenshot from 2025-04-17 17-21-15](https://github.com/user-attachments/assets/75f6df79-dcef-4403-a4ab-2e78aea28d96)
+
 import torch,gc
 import torch.optim as optim
 import torch.nn as nn
