@@ -1,3 +1,4 @@
+![reconstruction_triplet2](https://github.com/user-attachments/assets/07184cbd-6815-463c-beee-e9cc515e92e7)
 ![image](https://github.com/user-attachments/assets/1a74f741-024f-49fe-ae44-5afe10584805)
 ![image](https://github.com/user-attachments/assets/7022c246-7207-4944-a8db-6247df9d2308)
 
