@@ -1,4 +1,51 @@
 import os
+import matplotlib.pyplot as plt
+from tensorboard.backend.event_processing import event_accumulator
+
+# 设置 TensorBoard 日志根目录
+log_root = './logs'
+
+# 你要画的 scalar 名称（包括 lr、loss、accuracy 等）
+scalars_to_plot = ['loss', 'val/loss', 'accuracy', 'lr']  # 加上学习率 lr
+
+# 遍历所有 runs（子目录）
+runs = [d for d in os.listdir(log_root) if os.path.isdir(os.path.join(log_root, d))]
+
+# 颜色列表
+colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+for scalar_name in scalars_to_plot:
+    plt.figure(figsize=(10, 6))
+    for idx, run in enumerate(runs):
+        run_path = os.path.join(log_root, run)
+
+        # 加载 TensorBoard 的 event 文件
+        ea = event_accumulator.EventAccumulator(run_path)
+        ea.Reload()
+
+        if scalar_name not in ea.Tags()['scalars']:
+            print(f"⚠️ {scalar_name} 不存在于 {run_path}")
+            continue
+
+        events = ea.Scalars(scalar_name)
+        steps = [e.step for e in events]
+        values = [e.value for e in events]
+
+        plt.plot(steps, values, label=run, color=colors[idx % len(colors)])
+
+    plt.title(f'{scalar_name} over Steps')
+    plt.xlabel('Step')
+    plt.ylabel(scalar_name)
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f'{scalar_name}.png')
+    print(f'✅ 图像已保存：{scalar_name}.png')
+    # plt.show()  # 如果你希望直接弹出窗口看图，可以取消注释
+
+
+
+import os
 import tifffile
 import numpy as np
 from PIL import Image
