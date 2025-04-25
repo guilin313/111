@@ -3,7 +3,7 @@ import tifffile
 import numpy as np
 from PIL import Image
 
-# 指定四个tif图像路径（支持灰度和彩色混合）
+# 指定四个 tif 图像路径（灰度和彩色混合均可）
 tif_paths = [
     '/path/to/file1.tif',
     '/path/to/file2.tif',
@@ -12,19 +12,19 @@ tif_paths = [
 ]
 
 def to_rgb_array(img):
-    """确保图像为RGB格式"""
-    if img.ndim == 2:  # 灰度图，扩展为 RGB
+    """确保图像为 RGB 格式"""
+    if img.ndim == 2:  # 灰度图
         return np.stack([img] * 3, axis=-1)
     elif img.ndim == 3:
-        if img.shape[2] == 1:  # 单通道但带维度
+        if img.shape[2] == 1:
             return np.concatenate([img] * 3, axis=-1)
-        elif img.shape[2] == 3:  # 已是RGB
+        elif img.shape[2] == 3:
             return img
-        elif img.shape[2] == 4:  # RGBA，去掉Alpha通道
-            return img[:, :, :3]
+        elif img.shape[2] == 4:
+            return img[:, :, :3]  # 丢弃 alpha 通道
     raise ValueError("Unsupported image format.")
 
-# 读取四张图的第一帧并转换为RGB
+# 读取图像并转换为 RGB
 images = []
 for path in tif_paths:
     img_stack = tifffile.imread(path)
@@ -35,20 +35,23 @@ for path in tif_paths:
 # 转为 PIL 图像
 pil_images = [Image.fromarray(img.astype(np.uint8)) for img in images]
 
-# 统一高度和宽度拼接
+# 计算拼接后尺寸
 height = max(img.height for img in pil_images)
 total_width = sum(img.width for img in pil_images)
 
+# 拼接图像（横向）
 result = Image.new("RGB", (total_width, height))
 x_offset = 0
 for img in pil_images:
     result.paste(img, (x_offset, 0))
     x_offset += img.width
 
-# 保存到 ./concat 文件夹
+# 创建输出目录
 output_dir = os.path.join(os.getcwd(), 'concat')
 os.makedirs(output_dir, exist_ok=True)
-output_path = os.path.join(output_dir, 'concat_output.tif')
+
+# 保存为 PNG
+output_path = os.path.join(output_dir, 'concat_output.png')
 result.save(output_path)
 
-print(f"拼接完成，文件已保存到：{output_path}")
+print(f"✅ 拼接完成，已保存为 PNG：{output_path}")
