@@ -3,7 +3,7 @@ import tifffile
 import numpy as np
 from PIL import Image
 
-# 四个彩色 .tif 文件路径
+# 指定四个tif图像路径（支持灰度和彩色混合）
 tif_paths = [
     '/path/to/file1.tif',
     '/path/to/file2.tif',
@@ -11,40 +11,44 @@ tif_paths = [
     '/path/to/file4.tif',
 ]
 
+def to_rgb_array(img):
+    """确保图像为RGB格式"""
+    if img.ndim == 2:  # 灰度图，扩展为 RGB
+        return np.stack([img] * 3, axis=-1)
+    elif img.ndim == 3:
+        if img.shape[2] == 1:  # 单通道但带维度
+            return np.concatenate([img] * 3, axis=-1)
+        elif img.shape[2] == 3:  # 已是RGB
+            return img
+        elif img.shape[2] == 4:  # RGBA，去掉Alpha通道
+            return img[:, :, :3]
+    raise ValueError("Unsupported image format.")
+
+# 读取四张图的第一帧并转换为RGB
 images = []
 for path in tif_paths:
     img_stack = tifffile.imread(path)
-    # 取第一张切片（如果是多页）
-    first_slice = img_stack[0] if img_stack.ndim == 4 else img_stack
-    images.append(first_slice)
+    first_slice = img_stack[0] if img_stack.ndim >= 3 else img_stack
+    rgb_img = to_rgb_array(first_slice)
+    images.append(rgb_img)
 
-# 检查通道数一致（假设RGB或RGBA）
-channels = images[0].shape[-1] if images[0].ndim == 3 else 1
-assert all(img.shape[-1] == channels if img.ndim == 3 else channels == 1 for img in images), "通道数不一致"
-
-# 将所有图像转换为 PIL 格式
-pil_images = []
-for img in images:
-    if img.ndim == 2:
-        pil_img = Image.fromarray(img)  # 灰度
-    else:
-        pil_img = Image.fromarray(img)  # RGB 或 RGBA
-    pil_images.append(pil_img)
+# 转为 PIL 图像
+pil_images = [Image.fromarray(img.astype(np.uint8)) for img in images]
 
 # 统一高度和宽度拼接
 height = max(img.height for img in pil_images)
 total_width = sum(img.width for img in pil_images)
 
-result = Image.new(pil_images[0].mode, (total_width, height))
+result = Image.new("RGB", (total_width, height))
 x_offset = 0
 for img in pil_images:
     result.paste(img, (x_offset, 0))
     x_offset += img.width
 
-# 保存到 concat 文件夹
+# 保存到 ./concat 文件夹
 output_dir = os.path.join(os.getcwd(), 'concat')
 os.makedirs(output_dir, exist_ok=True)
 output_path = os.path.join(output_dir, 'concat_output.tif')
 result.save(output_path)
 
-print(f"保存成功：{output_path}")
+print(f"拼接完成，文件已保存到：{output_path}")
