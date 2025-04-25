@@ -1,3 +1,47 @@
+import os
+import matplotlib.pyplot as plt
+from tensorboard.backend.event_processing import event_accumulator
+
+log_root = './logs'
+scalars_to_plot = ['loss', 'val/loss', 'accuracy', 'lr']
+runs = [d for d in os.listdir(log_root) if os.path.isdir(os.path.join(log_root, d))]
+colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+# 创建 scalar 输出文件夹
+output_dir = os.path.join(os.getcwd(), 'scalar')
+os.makedirs(output_dir, exist_ok=True)
+
+for scalar_name in scalars_to_plot:
+    plt.figure(figsize=(10, 6))
+    for idx, run in enumerate(runs):
+        run_path = os.path.join(log_root, run)
+        ea = event_accumulator.EventAccumulator(run_path)
+        ea.Reload()
+
+        if scalar_name not in ea.Tags()['scalars']:
+            print(f"⚠️ {scalar_name} 不存在于 {run_path}")
+            continue
+
+        events = ea.Scalars(scalar_name)
+        steps = [e.step for e in events]
+        values = [e.value for e in events]
+
+        if len(steps) > 0:
+            plt.plot(steps, values, label=run, color=colors[idx % len(colors)])
+
+    plt.title(f'{scalar_name} over Steps')
+    plt.xlabel('Step')
+    plt.ylabel(scalar_name)
+    if plt.gca().has_data():
+        plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    output_path = os.path.join(output_dir, f'{scalar_name.replace("/", "_")}.png')
+    plt.savefig(output_path)
+    print(f'✅ 图像已保存：{output_path}')
+
+
+
 UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
   plt.legend()
 
