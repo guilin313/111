@@ -1,3 +1,64 @@
+import os
+import matplotlib.pyplot as plt
+from tensorboard.backend.event_processing import event_accumulator
+
+log_root = './logs_unetr_affinity3d2'  # 你的目录
+runs = [log_root]
+colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+output_dir = os.path.join(os.getcwd(), 'scalar')
+os.makedirs(output_dir, exist_ok=True)
+
+scalar_set = set()
+for run in runs:
+    print(f"🔍 正在加载 run: {run}")
+    ea = event_accumulator.EventAccumulator(run)
+    try:
+        ea.Reload()
+        scalars = ea.Tags().get('scalars', [])
+        print(f"✅ 找到 {len(scalars)} 个 scalar: {scalars}")
+        scalar_set.update(scalars)
+    except Exception as e:
+        print(f"❌ 加载失败: {e}")
+
+scalar_list = sorted(list(scalar_set))
+print("\n📋 所有可选 scalar 名：")
+for i, name in enumerate(scalar_list):
+    print(f"[{i+1}] {name}")
+
+selected_idx = input("\n请输入你想画的 scalar 编号（如 1,3）：")
+selected_scalars = [scalar_list[int(i.strip()) - 1] for i in selected_idx.split(',') if i.strip().isdigit()]
+
+for scalar_name in selected_scalars:
+    plt.figure(figsize=(10, 6))
+    has_data = False
+    for idx, run in enumerate(runs):
+        ea = event_accumulator.EventAccumulator(run)
+        ea.Reload()
+        if scalar_name not in ea.Tags().get('scalars', []):
+            print(f"⚠️ run 中没有 {scalar_name}")
+            continue
+        events = ea.Scalars(scalar_name)
+        steps = [e.step for e in events]
+        values = [e.value for e in events]
+        if steps:
+            has_data = True
+            plt.plot(steps, values, label=os.path.basename(run), color=colors[idx % len(colors)])
+    if has_data:
+        plt.title(scalar_name)
+        plt.xlabel('Step')
+        plt.ylabel(scalar_name)
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        output_path = os.path.join(output_dir, scalar_name.replace('/', '_') + '.png')
+        plt.savefig(output_path)
+        print(f"✅ 已保存：{output_path}")
+    else:
+        print(f"🚫 没有数据可画：{scalar_name}")
+
+
+
+
 events.out.tfevents.1744773167.guilin-System-Product-Name.672768.0
 logs_unetr_affinity3d2
 
