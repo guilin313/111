@@ -3,7 +3,7 @@ import tifffile
 import numpy as np
 from PIL import Image
 
-# 指定四个.tif文件的路径
+# 四个彩色 .tif 文件路径
 tif_paths = [
     '/path/to/file1.tif',
     '/path/to/file2.tif',
@@ -14,29 +14,36 @@ tif_paths = [
 images = []
 for path in tif_paths:
     img_stack = tifffile.imread(path)
-    first_slice = img_stack[0] if img_stack.ndim == 3 else img_stack
+    # 取第一张切片（如果是多页）
+    first_slice = img_stack[0] if img_stack.ndim == 4 else img_stack
     images.append(first_slice)
 
-# 确保图像大小统一（可选 resize）
-height = max(img.shape[0] for img in images)
-widths = [img.shape[1] for img in images]
-total_width = sum(widths)
+# 检查通道数一致（假设RGB或RGBA）
+channels = images[0].shape[-1] if images[0].ndim == 3 else 1
+assert all(img.shape[-1] == channels if img.ndim == 3 else channels == 1 for img in images), "通道数不一致"
 
-# 转换为PIL图像（灰度）
-pil_images = [Image.fromarray(img).convert("L") for img in images]
+# 将所有图像转换为 PIL 格式
+pil_images = []
+for img in images:
+    if img.ndim == 2:
+        pil_img = Image.fromarray(img)  # 灰度
+    else:
+        pil_img = Image.fromarray(img)  # RGB 或 RGBA
+    pil_images.append(pil_img)
 
-# 拼接图像
-result = Image.new('L', (total_width, height))
+# 统一高度和宽度拼接
+height = max(img.height for img in pil_images)
+total_width = sum(img.width for img in pil_images)
+
+result = Image.new(pil_images[0].mode, (total_width, height))
 x_offset = 0
 for img in pil_images:
     result.paste(img, (x_offset, 0))
     x_offset += img.width
 
-# 创建保存目录
+# 保存到 concat 文件夹
 output_dir = os.path.join(os.getcwd(), 'concat')
 os.makedirs(output_dir, exist_ok=True)
-
-# 保存图像
 output_path = os.path.join(output_dir, 'concat_output.tif')
 result.save(output_path)
 
