@@ -3,6 +3,70 @@ import tifffile
 import numpy as np
 from PIL import Image
 
+# 四个.tif文件路径（灰度和彩色混合都支持）
+tif_paths = [
+    '/path/to/file1.tif',
+    '/path/to/file2.tif',
+    '/path/to/file3.tif',
+    '/path/to/file4.tif',
+]
+
+gap = 10  # 图片间白色间隙（像素）
+
+def to_rgb_array(img):
+    """将图像标准化为 RGB"""
+    if img.ndim == 2:
+        return np.stack([img]*3, axis=-1)
+    elif img.ndim == 3:
+        if img.shape[2] == 1:
+            return np.concatenate([img]*3, axis=-1)
+        elif img.shape[2] == 3:
+            return img
+        elif img.shape[2] == 4:
+            return img[:, :, :3]
+    raise ValueError("Unsupported image format.")
+
+# 读取图像并转为RGB
+images = []
+for path in tif_paths:
+    img_stack = tifffile.imread(path)
+    first_slice = img_stack[0] if img_stack.ndim >= 3 else img_stack
+    rgb_img = to_rgb_array(first_slice)
+    images.append(rgb_img.astype(np.uint8))
+
+# 转为 PIL 图像
+pil_images = [Image.fromarray(img) for img in images]
+
+# 计算总宽度（包括间隙）
+height = max(img.height for img in pil_images)
+total_width = sum(img.width for img in pil_images) + gap * (len(pil_images) - 1)
+
+# 创建新画布（白底）
+result = Image.new("RGB", (total_width, height), color=(255, 255, 255))
+
+# 拼接图像
+x_offset = 0
+for i, img in enumerate(pil_images):
+    result.paste(img, (x_offset, 0))
+    x_offset += img.width + gap
+
+# 创建输出文件夹
+output_dir = os.path.join(os.getcwd(), 'concat')
+os.makedirs(output_dir, exist_ok=True)
+
+# 保存为 PNG
+output_path = os.path.join(output_dir, 'concat_output.png')
+result.save(output_path)
+
+print(f"✅ 拼接完成，已保存到：{output_path}")
+
+
+
+import os
+import tifffile
+import numpy as np
+from PIL import Image
+
 # 指定四个 tif 图像路径（灰度和彩色混合均可）
 tif_paths = [
     '/path/to/file1.tif',
