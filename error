@@ -1,3 +1,24 @@
+/home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/UNetR/draw.py 
+🔍 正在加载 run: ./logs
+✅ 找到 12 个 scalar: ['train/loss', 'train/grad_norm', 'train/learning_rate', 'train/epoch', 'eval/runtime', 'eval/samples_per_second', 'eval/steps_per_second', 'train/train_runtime', 'train/train_samples_per_second', 'train/train_steps_per_second', 'train/total_flos', 'train/train_loss']
+
+📋 所有可选 scalar 名：
+[1] eval/runtime
+[2] eval/samples_per_second
+[3] eval/steps_per_second
+[4] train/epoch
+[5] train/grad_norm
+[6] train/learning_rate
+[7] train/loss
+[8] train/total_flos
+[9] train/train_loss
+[10] train/train_runtime
+[11] train/train_samples_per_second
+[12] train/train_steps_per_second
+
+
+
+
 /home/guilin/miniconda3/envs/pt12/bin/python /home/guilin/PycharmProjects/MAE3d/inference_3d2.py 
 yes
 Traceback (most recent call last):
