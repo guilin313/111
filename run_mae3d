@@ -1,4 +1,183 @@
-    {
+import os
+import sys
+import logging
+import random
+import torch
+import json
+import tifffile
+import numpy as np
+from torch.utils.data import Dataset
+from torchvision.transforms import Compose
+from dataclasses import dataclass, field
+from typing import Optional, List
+from transformers import HfArgumentParser, Trainer, TrainingArguments
+from transformers.trainer_utils import EvalPrediction
+from vitmae3d import ViTMAEForPreTraining, ViTMAEConfig
+from torch.utils.tensorboard import SummaryWriter
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+class ModelArguments:
+    config_path: Optional[str] = field(default=None)
+    model_path: Optional[str] = field(default=None)
+    mask_ratio: float = field(default=0.75)
+    norm_pix_loss: bool = field(default=True)
+
+@dataclass
+class DataTrainingArguments:
+    train_dir: str = field(metadata={"help": "Directory containing .tif training volumes."})
+    val_dir: str = field(metadata={"help": "Directory containing .tif validation volumes."})
+    max_train_samples: Optional[int] = field(default=None)
+    max_eval_samples: Optional[int] = field(default=None)
+
+@dataclass
+class CustomTrainingArguments(TrainingArguments):
+    base_learning_rate: float = field(
+        default=1e-3, metadata={"help": "Absolute LR = base_lr * batch_size / 256"}
+    )
+
+def log_dataset_samples(dataset, writer, tag_prefix="train", num_samples=5):
+    for idx in range(min(num_samples, len(dataset))):
+        data = dataset[idx]["pixel_values"]  # shape: [1, D, H, W]
+        image = data[data.shape[0] // 2]   # middle slice [H, W]
+        writer.add_image(f"{tag_prefix}_slice_{idx}", image.unsqueeze(0), global_step=0)
+
+class VolumeDataset(Dataset):
+    def __init__(self, file_list, transform=None):
+        self.file_list = file_list
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        volume = tifffile.imread(self.file_list[idx]).astype(np.float32)
+        volume = torch.tensor(volume)  # [D, H, W]
+        if self.transform:
+            volume = self.transform(volume)
+        return {"pixel_values": volume}
+
+class RandomCrop3D:
+    def __init__(self, size):
+        self.size = size  # (D, H, W)
+
+    def __call__(self, vol):
+        d, h, w = vol.shape
+        zd, yd, xd = self.size
+        z = random.randint(0, d - zd)
+        y = random.randint(0, h - yd)
+        x = random.randint(0, w - xd)
+        return vol[z:z+zd, y:y+yd, x:x+xd]
+
+class Normalize3D:
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, vol):
+        return (vol / 255.0 - self.mean) / self.std
+
+def collate_fn(examples):
+    batch = torch.stack([ex["pixel_values"] for ex in examples])
+    return {"pixel_values": batch.unsqueeze(1)}  # [B, 1, D, H, W]
+
+def gather_tif_files(root_dir):
+    files = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for f in filenames:
+            if f.endswith(".tif"):
+                files.append(os.path.join(dirpath, f))
+    return files
+
+# ==== 这里是新加的 compute_metrics 函数 ====
+def compute_mae_metrics(eval_pred: EvalPrediction):
+    logits, labels = eval_pred.predictions, eval_pred.label_ids
+    if isinstance(logits, tuple):  # some models return a tuple
+        logits = logits[0]
+    loss = ((logits - labels) ** 2).mean()
+    return {"eval_loss": loss.item()}
+# ==========================================
+
+def main():
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, CustomTrainingArguments))
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Loading data...")
+
+    train_files = gather_tif_files(data_args.train_dir)
+    val_files = gather_tif_files(data_args.val_dir)
+
+    if data_args.max_train_samples:
+        train_files = train_files[:data_args.max_train_samples]
+    if data_args.max_eval_samples:
+        val_files = val_files[:data_args.max_eval_samples]
+
+    transform = Compose([
+        RandomCrop3D((32, 320, 320)),
+        Normalize3D(143.510583/255, 45.286453/255),
+    ])
+
+    train_dataset = VolumeDataset(train_files, transform)
+    val_dataset = VolumeDataset(val_files, transform)
+
+    writer = SummaryWriter(log_dir=training_args.logging_dir)
+    log_dataset_samples(train_dataset, writer, tag_prefix="train", num_samples=5)
+    log_dataset_samples(val_dataset, writer, tag_prefix="val", num_samples=3)
+    writer.close()
+    logger.info("✅ Wrote sample slices to TensorBoard.")
+
+    config = ViTMAEConfig(
+        image_size=(32, 320, 320),
+        patch_size=(16, 16, 16),
+        num_channels=1,
+        hidden_size=768,
+        num_hidden_layers=10,
+        num_attention_heads=8,
+        intermediate_size=3072,
+        decoder_hidden_size=384,
+        decoder_num_hidden_layers=6,
+        decoder_num_attention_heads=4,
+        decoder_intermediate_size=1536,
+        mask_ratio=model_args.mask_ratio,
+        norm_pix_loss=model_args.norm_pix_loss,
+    )
+
+    if model_args.model_path:
+        model = ViTMAEForPreTraining.from_pretrained(model_args.model_path, config=config)
+    else:
+        model = ViTMAEForPreTraining(config)
+
+    total_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
+    training_args.learning_rate = training_args.base_learning_rate * total_batch_size / 256
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        data_collator=collate_fn,
+        compute_metrics=compute_mae_metrics,  # <<< 加了这行！
+    )
+
+    logger.info("Start training...")
+    trainer.train()
+    trainer.save_model()
+
+    logger.info("Evaluating...")
+    metrics = trainer.evaluate()
+    trainer.log_metrics("eval", metrics)
+    trainer.save_metrics("eval", metrics)
+    trainer.save_state()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+{
       "epoch": 25.930445393532644,
       "eval_runtime": 234.9197,
       "eval_samples_per_second": 37.149,
