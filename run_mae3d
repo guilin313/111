@@ -1,3 +1,20 @@
+python run_mae_3d.py \
+  --train_dir ./data/train \
+  --val_dir ./data/val \
+  --per_device_train_batch_size 4 \
+  --per_device_eval_batch_size 4 \
+  --num_train_epochs 100 \
+  --output_dir ./output/vitmae3d \
+  --logging_dir ./output/vitmae3d/logs \
+  --base_learning_rate 1e-3 \
+  --logging_steps 10 \
+  --save_strategy="steps" \
+  --save_steps=10000 \
+  --eval_steps 10000 \
+  --evaluation_strategy steps \
+  --save_total_limit 3
+
+
 class ViTMAEForPreTraining(ViTMAEPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
