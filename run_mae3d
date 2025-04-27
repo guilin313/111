@@ -1,3 +1,19 @@
+python run_mae_3d.py \
+  --train_dir ./data/train \
+  --val_dir ./data/val \
+  --per_device_train_batch_size 4 \
+  --per_device_eval_batch_size 4 \
+  --num_train_epochs 100 \
+  --output_dir ./output/vitmae3d \
+  --logging_dir ./output/vitmae3d/logs \
+  --base_learning_rate 1e-3 \
+  --logging_steps 10 \
+  --save_strategy="epoch" \           # <<< 改这里
+  --evaluation_strategy="epoch" \     # <<< 改这里
+  --save_total_limit=3
+
+
+
 import os
 import sys
 import logging
