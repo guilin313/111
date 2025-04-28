@@ -1,5 +1,43 @@
 from monai.networks.nets import UNETR
 import torch.nn as nn
+import torch
+
+def get_unetr_model(img_size=(32, 320, 320), in_channels=1, out_channels=3):
+    return UNETR(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        img_size=img_size,
+        feature_size=16,
+        hidden_size=768,
+        mlp_dim=3072,
+        num_heads=12,
+        # pos_embed='perceptron',
+        norm_name='instance',
+        res_block=True,
+        dropout_rate=0.0,
+    )
+
+# ============ 新加的脚本部分 ============
+
+def count_parameters(model):
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return total_params, trainable_params
+
+# 创建模型
+model = get_unetr_model()
+
+# 统计参数
+total_params, trainable_params = count_parameters(model)
+
+print(f"Total parameters: {total_params:,}")
+print(f"Trainable parameters: {trainable_params:,}")
+
+
+
+
+from monai.networks.nets import UNETR
+import torch.nn as nn
 
 def get_unetr_model(img_size=(32, 320, 320), in_channels=1, out_channels=3):
     return UNETR(
