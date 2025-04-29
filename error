@@ -1,3 +1,6 @@
+rm ~/.cache/matplotlib/fontlist-v*.json
+
+
 findfont: Font family 'Times New Roman' not found.
 findfont: Font family 'Times New Roman' not found.
 findfont: Font family 'Times New Roman' not found.
