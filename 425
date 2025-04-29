@@ -1,3 +1,12 @@
+from matplotlib import ticker  # 确保你在顶部有这个 import
+
+# 如果是学习率图，使用科学计数法
+if 'lr' in scalar_name.lower() or 'learning_rate' in scalar_name.lower():
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.0e'))  # 可改为 '%.1e' 保留一位小数
+
+
+
 # 设置字体和基本美化
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams['axes.titlesize'] = 18    # 标题字号
