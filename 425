@@ -1,3 +1,14 @@
+# 设置字体和基本美化
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['axes.titlesize'] = 18    # 标题字号
+plt.rcParams['axes.labelsize'] = 16    # 轴标签字号
+plt.rcParams['xtick.labelsize'] = 14   # x轴刻度字号
+plt.rcParams['ytick.labelsize'] = 14   # y轴刻度字号
+plt.rcParams['legend.fontsize'] = 14   # 图例字号
+plt.rcParams['lines.linewidth'] = 2.0  # 线条粗细
+
+
+
 import os
 import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
