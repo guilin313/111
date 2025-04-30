@@ -1,3 +1,10 @@
+(base) guilin@guilin-System-Product-Name:~/MAE3d$ git remote add MAE3d git@github.com:guilin313/MAE3d.git
+(base) guilin@guilin-System-Product-Name:~/MAE3d$ git add .
+error: 'MAE3d 1/' does not have a commit checked out
+fatal: adding files failed
+
+
+
 (base) guilin@guilin-System-Product-Name:~$ git clone git@github.com:guilin313/MAE3d.git
 Cloning into 'MAE3d'...
 The authenticity of host 'github.com (20.205.243.166)' can't be established.
